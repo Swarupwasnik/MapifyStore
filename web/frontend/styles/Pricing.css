@@ -1,0 +1,104 @@
+.prcingsec-wrap {
+    position: relative;
+    width: 100%;
+    padding: 40px 0px;
+}
+.pricing-container {
+    text-align: center;
+    padding: 20px;
+  }  
+.price-head {
+    font-size: 36px;
+    margin-bottom: 10px;
+  }  
+  .billing-options {
+    display: inline-block;
+    margin: 20px 0;
+  }  
+  .billing-options button {
+    padding: 10px 20px;
+    border: none;
+    background-color: #f2f2f2;
+    cursor: pointer;
+  }  
+  .billing-options button.active {
+    background-color: #ddd;
+    font-weight: bold;
+  }  
+  .billing-options span {
+    color: #ff6600;
+    font-weight: bold;
+  }  
+  .pricing-plans {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+  }  
+  .pricing-plan {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    width: 300px;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }  
+  .pricing-plan h3 {
+    font-size: 24px;
+    color: #333;
+  }  
+  .pricing-plan h2 {
+    font-size: 32px;
+    color: #333;
+    margin: 10px 0;
+  }  
+  .pricing-plan p {
+    color: #888;
+    margin-bottom: 20px;
+  }  
+  .pricing-plan ul {
+    list-style-type: none;
+    text-align: left;
+    margin-bottom: 20px;
+  }  
+  .pricing-plan ul li {
+    padding: 5px 0;
+  }  
+  .pricing-plan button {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+  }  
+  .pricing-plan button:hover {
+    background-color: #0056b3;
+  }  
+  .pricing-popular {
+    border: 2px solid #ff6600;
+  }  
+  .pricing-popular-badge {
+    background-color: #ff6600;
+    color: #fff;
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    margin-left: 5px;
+  }  
+  .pricing-enterprise {
+    background-color: #333;
+    color: #fff;
+  }  
+  .pricing-enterprise ul li,
+  .pricing-enterprise p,
+  .pricing-enterprise h2,
+  .pricing-enterprise h3 {
+    color: #fff;
+  }  
+  .pricing-enterprise button {
+    background-color: #444;
+  }  
+  .pricing-enterprise button:hover {
+    background-color: #222;
+  }

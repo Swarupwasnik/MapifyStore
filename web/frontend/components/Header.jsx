@@ -10,6 +10,7 @@ function NavigationBar() {
         <Link to="/settings">Settings</Link>
          <Link to= "/category">Category</Link> 
         <Link to="/pricing">Pricing</Link>
+         <Link to="/userstorelist">Store on Map</Link> 
    
 
 

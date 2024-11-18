@@ -40,7 +40,45 @@ const StoreRegister = () => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
-  const navigate = useNavigate(); // Initialize navigate
+  const handleCancel = () => {
+    const confirmCancel = window.confirm("Are you sure you want to cancel and clear all fields?");
+    if (confirmCancel) {
+      setFormData({
+        company: "",
+        name: "",
+        websiteURL: "",
+        fax: "",
+        email: "",
+        phone: {
+          countryCode: "",
+          number: "",
+        },
+        categoryId: "",
+        address: {
+          street: "",
+          city: "",
+          state: "",
+          postalCode: "",
+          country: "",
+        },
+        additional: "",
+        workingHours: [
+          { day: "Monday", isOpen: true, start: "09:00", end: "18:00" },
+          { day: "Tuesday", isOpen: true, start: "09:00", end: "18:00" },
+          { day: "Wednesday", isOpen: true, start: "09:00", end: "18:00" },
+          { day: "Thursday", isOpen: true, start: "09:00", end: "18:00" },
+          { day: "Friday", isOpen: true, start: "09:00", end: "18:00" },
+          { day: "Saturday", isOpen: true, start: "09:00", end: "18:00" },
+          { day: "Sunday", isOpen: false, start: "09:00", end: "18:00" },
+        ],
+        agreeToTerms: false,
+      });
+      setErrors({});
+    }
+  };
+  
+
+  const navigate = useNavigate(); 
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -433,7 +471,7 @@ const StoreRegister = () => {
                 <button type="submit" className="save" disabled={loading}>
                   {loading ? "Saving.." : storeId ? "Update Store" : "Create Store" }
                 </button>
-                <button type="button" className="cancel">
+                <button type="button" className="cancel" onClick={handleCancel}>
                   Cancel
                 </button>
               </div>

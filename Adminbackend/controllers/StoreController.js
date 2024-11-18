@@ -219,12 +219,10 @@ export const getStoresWithCoordinates = async (req, res) => {
     res.json(storesWithCoordinates);
   } catch (error) {
     console.error("Error retrieving stores with coordinates:", error);
-    res
-      .status(500)
-      .json({
-        error: "Error retrieving stores with coordinates",
-        details: error.message,
-      });
+    res.status(500).json({
+      error: "Error retrieving stores with coordinates",
+      details: error.message,
+    });
   }
 };
 
@@ -280,10 +278,9 @@ export const searchStoresByCategory = async (req, res) => {
     if (!categoryData)
       return res.status(404).json({ error: "Category not found" });
 
-    // Find published stores for the given category
     const stores = await Store.find({
       category: categoryData._id,
-      published: true, // Only return stores that are published
+      published: true, 
     });
 
     if (stores.length === 0) {
@@ -317,21 +314,50 @@ export const togglePublishStore = async (req, res) => {
       return res.status(404).json({ error: "Store not found" });
     }
 
-    store.published = req.body.published;
-    await store.save();
+    await Store.updateOne(
+      { _id: req.params.id },
+      { published: req.body.published }
+    );
 
-    res
-      .status(200)
-      .json({
-        message: `Store ${
-          store.published ? "published" : "unpublished"
-        } successfully`,
-      });
+    res.status(200).json({
+      message: `Store ${
+        req.body.published ? "published" : "unpublished"
+      } successfully`,
+    });
   } catch (error) {
     console.error("Error updating store publish status:", error);
     res.status(500).json({ error: "Failed to update store publish status" });
   }
 };
+
+
+// export const togglePublishStore = async (req, res) => {
+//   try {
+//     const store = await Store.findById(req.params.id);
+//     if (!store) {
+//       return res.status(404).json({ error: "Store not found" });
+//     }
+
+//     store.published = req.body.published;
+//     await store.save();
+
+//     res
+//       .status(200)
+//       .json({
+//         message: `Store ${
+//           store.published ? "published" : "unpublished"
+//         } successfully`,
+//       });
+//   } catch (error) {
+//     console.error("Error updating store publish status:", error);
+//     res.status(500).json({ error: "Failed to update store publish status" });
+//   }
+// };
+
+
+
+
+
 
 export const getPublishedStores = async (req, res) => {
   try {

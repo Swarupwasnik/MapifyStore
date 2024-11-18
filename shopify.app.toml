@@ -3,7 +3,7 @@
 client_id = "b99d9e7797e3cc43d591fd60c41b90e3"
 name = "new one"
 handle = "new-one-10"
-application_url = "https://difference-fires-motorcycle-zum.trycloudflare.com"
+application_url = "https://revenue-manual-estonia-rim.trycloudflare.com"
 embedded = true
 
 [build]
@@ -244,7 +244,37 @@ redirect_urls = [
   "https://wind-tied-stages-friendship.trycloudflare.com/api/auth/callback",
   "https://difference-fires-motorcycle-zum.trycloudflare.com/auth/callback",
   "https://difference-fires-motorcycle-zum.trycloudflare.com/auth/shopify/callback",
-  "https://difference-fires-motorcycle-zum.trycloudflare.com/api/auth/callback"
+  "https://difference-fires-motorcycle-zum.trycloudflare.com/api/auth/callback",
+  "https://indicating-disposition-jimmy-instruction.trycloudflare.com/auth/callback",
+  "https://indicating-disposition-jimmy-instruction.trycloudflare.com/auth/shopify/callback",
+  "https://indicating-disposition-jimmy-instruction.trycloudflare.com/api/auth/callback",
+  "https://techrepublic-typical-liabilities-fraser.trycloudflare.com/auth/callback",
+  "https://techrepublic-typical-liabilities-fraser.trycloudflare.com/auth/shopify/callback",
+  "https://techrepublic-typical-liabilities-fraser.trycloudflare.com/api/auth/callback",
+  "https://apparently-agent-ended-events.trycloudflare.com/auth/callback",
+  "https://apparently-agent-ended-events.trycloudflare.com/auth/shopify/callback",
+  "https://apparently-agent-ended-events.trycloudflare.com/api/auth/callback",
+  "https://installed-nose-revelation-concerned.trycloudflare.com/auth/callback",
+  "https://installed-nose-revelation-concerned.trycloudflare.com/auth/shopify/callback",
+  "https://installed-nose-revelation-concerned.trycloudflare.com/api/auth/callback",
+  "https://robots-provider-suspected-right.trycloudflare.com/auth/callback",
+  "https://robots-provider-suspected-right.trycloudflare.com/auth/shopify/callback",
+  "https://robots-provider-suspected-right.trycloudflare.com/api/auth/callback",
+  "https://scanners-output-administered-storage.trycloudflare.com/auth/callback",
+  "https://scanners-output-administered-storage.trycloudflare.com/auth/shopify/callback",
+  "https://scanners-output-administered-storage.trycloudflare.com/api/auth/callback",
+  "https://private-meyer-mini-henry.trycloudflare.com/auth/callback",
+  "https://private-meyer-mini-henry.trycloudflare.com/auth/shopify/callback",
+  "https://private-meyer-mini-henry.trycloudflare.com/api/auth/callback",
+  "https://commit-marion-students-kevin.trycloudflare.com/auth/callback",
+  "https://commit-marion-students-kevin.trycloudflare.com/auth/shopify/callback",
+  "https://commit-marion-students-kevin.trycloudflare.com/api/auth/callback",
+  "https://restored-ind-intro-preferences.trycloudflare.com/auth/callback",
+  "https://restored-ind-intro-preferences.trycloudflare.com/auth/shopify/callback",
+  "https://restored-ind-intro-preferences.trycloudflare.com/api/auth/callback",
+  "https://revenue-manual-estonia-rim.trycloudflare.com/auth/callback",
+  "https://revenue-manual-estonia-rim.trycloudflare.com/auth/shopify/callback",
+  "https://revenue-manual-estonia-rim.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]

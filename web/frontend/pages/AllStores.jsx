@@ -42,9 +42,6 @@ const AllStore = () => {
     navigate("/storereg");
   };
 
-  // const handleEditStore = (store) => {
-  //   navigate(`/storereg/${store._id}`);
-  // };
   const handleEditStore = (store) => {
     setSelectedStore(store);
     setIsEditing(true);
@@ -87,6 +84,9 @@ const AllStore = () => {
   };
 
   const handleTogglePublished = async (storeId, isPublished) => {
+    setError("");
+    setSuccess("");
+
     try {
       const response = await axios.put(
         `http://localhost:5175/api/v1/stores/${storeId}/publish`,
@@ -100,9 +100,119 @@ const AllStore = () => {
             : store
         )
       );
-      setSuccess("Store status updated successfully.");
+
+      setSuccess("Store Published successfully.");
+
+      setTimeout(() => {
+        setSuccess("");
+      }, 3000);
     } catch (err) {
       setError("Error updating store status.");
+
+      setTimeout(() => {
+        setError("");
+      }, 3000);
+    }
+  };
+  const handleSaveEdit = async () => {
+    if (!selectedStore) return;
+
+    console.log("Selected Store Data:", selectedStore);
+
+    const requiredFields = [
+      "company",
+      "name",
+      "email",
+      "phone",
+      "address",
+      "category",
+      "workingHours",
+      "agreeToTerms",
+    ];
+
+    const missingFields = requiredFields.filter((field) => {
+      if (!selectedStore[field]) return true;
+
+      if (field === "phone") {
+        return (
+          !selectedStore.phone?.countryCode || !selectedStore.phone?.number
+        );
+      }
+      if (field === "address") {
+        return (
+          !selectedStore.address?.street ||
+          !selectedStore.address?.city ||
+          !selectedStore.address?.state ||
+          !selectedStore.address?.postalCode ||
+          !selectedStore.address?.country
+        );
+      }
+      if (field === "category") {
+        return !selectedStore.category?._id;
+      }
+      if (field === "workingHours") {
+        return selectedStore.workingHours.length === 0;
+      }
+      return false;
+    });
+
+    if (missingFields.length > 0) {
+      setError(`Missing required fields: ${missingFields.join(", ")}`);
+      setTimeout(() => setError(""), 3000);
+      return;
+    }
+
+    const payload = {
+      company: selectedStore.company,
+      name: selectedStore.name,
+      websiteURL: selectedStore.websiteURL || "",
+      fax: selectedStore.fax || "",
+      email: selectedStore.email,
+      phone: {
+        countryCode: selectedStore.phone?.countryCode,
+        number: selectedStore.phone?.number,
+      },
+      categoryId: selectedStore.category._id,
+      address: {
+        street: selectedStore.address?.street,
+        city: selectedStore.address?.city,
+        state: selectedStore.address?.state,
+        postalCode: selectedStore.address?.postalCode,
+        country: selectedStore.address?.country,
+      },
+      additional: selectedStore.additional || "",
+      workingHours: selectedStore.workingHours,
+      agreeToTerms: selectedStore.agreeToTerms,
+    };
+
+    try {
+      const response = await axios.put(
+        `http://localhost:5175/api/v1/stores/updatestore/${selectedStore._id}`,
+        payload
+      );
+
+      setStores((prevStores) =>
+        prevStores.map((store) =>
+          store._id === selectedStore._id ? response.data : store
+        )
+      );
+
+      setSuccess("Store updated successfully.");
+      setTimeout(() => setSuccess(""), 3000);
+      setIsEditing(false);
+      setSelectedStore(null);
+    } catch (error) {
+      console.error("Error updating store:", error);
+      if (error.response && error.response.data.errors) {
+        const errors = error.response.data.errors;
+        const errorMessages = Object.keys(errors).map(
+          (field) => `${field}: ${errors[field]}`
+        );
+        setError(errorMessages.join(", "));
+      } else {
+        setError("Error updating store.");
+      }
+      setTimeout(() => setError(""), 3000);
     }
   };
 
@@ -117,75 +227,6 @@ const AllStore = () => {
       setError("Error deleting store.");
     }
   };
-
-  const handleSaveEdit = async () => {
-    console.log("Selected Store Data:", selectedStore); // Log the store data to check for missing fields
-  
-    // Validate required fields, including nested objects
-    const requiredFields = [
-      "company", 
-      "name", 
-      "email", 
-      "phone", 
-      "address", 
-      "category", 
-      "workingHours", // Ensure workingHours is not empty
-      "agreeToTerms"
-    ];
-  
-    const missingFields = requiredFields.filter((field) => {
-      if (!selectedStore[field]) return true;
-  
-      // Special handling for nested objects
-      if (field === "phone") {
-        return !selectedStore.phone?.countryCode || !selectedStore.phone?.number;
-      }
-      if (field === "address") {
-        return !selectedStore.address?.street || !selectedStore.address?.city || 
-               !selectedStore.address?.state || !selectedStore.address?.postalCode ||
-               !selectedStore.address?.country || !selectedStore.address?.latitude || 
-               !selectedStore.address?.longitude;
-      }
-      if (field === "category") {
-        return !selectedStore.category?._id || !selectedStore.category?.name;
-      }
-      return false; // No missing field for other simple fields
-    });
-  
-    if (missingFields.length > 0) {
-      setError(`Missing required fields: ${missingFields.join(", ")}`);
-      return; // Exit early if validation fails
-    }
-  
-    try {
-      const response = await axios.put(
-        `http://localhost:5175/api/v1/stores/updatestore/${selectedStore._id}`,
-        selectedStore
-      );
-  
-      setStores((prevStores) =>
-        prevStores.map((store) =>
-          store._id === selectedStore._id ? response.data : store
-        )
-      );
-      setSuccess("Store updated successfully.");
-      setIsEditing(false);
-      setSelectedStore(null);
-    } catch (error) {
-      console.error("Error updating store:", error);
-      if (error.response && error.response.data.errors) {
-        // Handle specific error responses
-        const errors = error.response.data.errors;
-        const errorMessages = Object.keys(errors).map(
-          (field) => `${field}: ${errors[field]}`
-        );
-        setError(errorMessages.join(", "));
-      } else {
-        setError("Error updating store.");
-      }
-    }
-  };
-  
 
   const rows = stores
     .filter((store) =>
@@ -203,10 +244,20 @@ const AllStore = () => {
       >
         {store.published ? "Unpublish" : "Publish"}
       </Button>,
+
       <Stack spacing="tight">
         <Button plain icon={EditMinor} onClick={() => handleEditStore(store)}>
           Edit
         </Button>
+        {store === selectedStore && isEditing && (
+          <Button onClick={() => handleSaveEdit(false)}>Save</Button>
+        )}{" "}
+        {store === selectedStore && isEditing && (
+          <Button onClick={() => handleSaveEdit(true)}>
+            {" "}
+            {store.published ? "Unpublish and Save" : "Publish and Save"}{" "}
+          </Button>
+        )}
         <Button
           plain
           destructive
@@ -318,11 +369,9 @@ const AllStore = () => {
             />
             <TextField
               label="Fax"
-              value={selectedStore.
-                fax}
+              value={selectedStore.fax}
               onChange={(value) =>
-                setSelectedStore({ ...selectedStore, 
-                  fax: value })
+                setSelectedStore({ ...selectedStore, fax: value })
               }
             />
             <TextField
@@ -415,41 +464,7 @@ const AllStore = () => {
                 setSelectedStore({ ...selectedStore, additional: value })
               }
             />
-            <TextField
-              label="latitude"
-              multiline
-              autoComplete="off"
-              value={selectedStore.latitude || ""}
-              onChange={(value) =>
-                setSelectedStore({ ...selectedStore, latitude: value })
-              }
-            />
 
-            <TextField
-              label="Longitude"
-              multiline
-              autoComplete="off"
-              value={selectedStore.longitude || ""}
-              onChange={(value) =>
-                setSelectedStore({ ...selectedStore, longitude: value })
-              }
-            />
-            <Checkbox
-              label="Published"
-              checked={selectedStore.published || false}
-              onChange={(checked) =>
-                setSelectedStore({ ...selectedStore, published: checked })
-              }
-            />
-            <Checkbox
-              label="Agree to Terms"
-              checked={selectedStore.agreeToTerms || false}
-              onChange={(checked) =>
-                setSelectedStore({ ...selectedStore, agreeToTerms: checked })
-              }
-            />
-
-            {/* Working Hours Section */}
             {[
               "Monday",
               "Tuesday",
@@ -522,6 +537,14 @@ const AllStore = () => {
                 )}
               </Stack>
             ))}
+
+            <Checkbox
+              label="Agree to Terms"
+              checked={selectedStore.agreeToTerms || false}
+              onChange={(checked) =>
+                setSelectedStore({ ...selectedStore, agreeToTerms: checked })
+              }
+            />
           </Modal.Section>
         </Modal>
       )}

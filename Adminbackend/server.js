@@ -11,7 +11,7 @@ import { shopifyApi, ApiVersion } from '@shopify/shopify-api';
 import '@shopify/shopify-api/adapters/node';
 import shopifyRoutes from "./routes/shopifyRoutes.js";
 import { SuperfaceClient } from '@superfaceai/one-sdk';
-import geocodeRoutes from './routes/geocodeRoutes.js';
+import StoreRoutes from './routes/StoreRoutes.js';
 import WebSocket, { WebSocketServer } from 'ws';
 import categoryRoutes from "./routes/categoryRoutes.js"
 import settingsRoutes from "../Adminbackend/routes/settingsRoutes.js";
@@ -119,7 +119,7 @@ app.post('/api/route', async (req, res) => {
 
 app.use('/api/v1/shopify', shopifyRoutes);
 app.use('/api/v1/category',categoryRoutes);
-app.use('/api/v1/stores', geocodeRoutes);
+app.use('/api/v1/stores', StoreRoutes);
 
 app.use("/api/v1/settings", settingsRoutes);
 wss.on('connection', (ws) => {

@@ -1,54 +1,80 @@
-import { Page, LegacyCard, Text, Button, HorizontalStack, Layout } from '@shopify/polaris';
 
-export default function Pricing() {
+import React, { useState } from 'react';
+import "../styles/Pricing.css";
+const Pricing = () => {
+  const [isAnnual, setIsAnnual] = useState(true); 
+
+  const handleToggle = (planType) => {
+    setIsAnnual(planType === 'annual');
+  };
+
   return (
-    <Page title="Pricing Plans">
-      <Layout>
-        <Layout.Section>
-          <LegacyCard>
-            <LegacyCard.Section>
-              <Text variant="headingLg" as="h2">
-                Free Plan
-              </Text>
-              <Text color="subdued">
-                Access basic features with limited locations.
-              </Text>
-              <Text variant="headingLg" as="p">$0/month</Text>
-              <Button primary>Choose Plan</Button>
-            </LegacyCard.Section>
-          </LegacyCard>
-        </Layout.Section>
+    <div className="prcingsec-wrap">
+      <div className="pricing-container">
+        <h2 className="price-head">Plans and Pricing</h2>
+        <p>Receive unlimited credits when you pay yearly, and save on your plan.</p>
+        
+        <div className="billing-options">
+          <button 
+            className={isAnnual ? 'active' : ''} 
+            onClick={() => handleToggle('annual')}
+          >
+            Annual <span>Save 35%</span>
+          </button>
+          <button 
+            className={!isAnnual ? 'active' : ''} 
+            onClick={() => handleToggle('monthly')}
+          >
+            Monthly
+          </button>
+        </div>
+        
+        <div className="pricing-plans">
+          <div className="pricing-plan">
+            <h3>Free</h3>
+            <h2>{isAnnual ? '$0' : '$0'}</h2> 
+            <p>Per user/month, billed {isAnnual ? 'annually' : 'monthly'}</p>
+            <ul>
+              <li>Free e-mail alerts</li>
+              <li>3-minute checks</li>
+              <li>Automatic data enrichment</li>
+              <li>10 monitors</li>
+              <li>Up to 3 seats</li>
+            </ul>
+            <button>Get started for free</button>
+          </div>
 
-        <Layout.Section>
-          <LegacyCard>
-            <LegacyCard.Section>
-              <Text variant="headingLg" as="h2">
-                Pro Plan
-              </Text>
-              <Text color="subdued">
-                Ideal for growing businesses needing more features.
-              </Text>
-              <Text variant="headingLg" as="p">$20/month</Text>
-              <Button primary>Choose Plan</Button>
-            </LegacyCard.Section>
-          </LegacyCard>
-        </Layout.Section>
+          <div className="pricing-plan pricing-popular">
+            <h3>Pro <span className="pricing-popular-badge">Popular</span></h3>
+            <h2>{isAnnual ? '$85' : '$100'}</h2> 
+            <p>Per user/month, billed {isAnnual ? 'annually' : 'monthly'}</p>
+            <ul>
+              <li>Unlimited phone calls</li>
+              <li>30 second checks</li>
+              <li>Single-user account</li>
+              <li>20 monitors</li>
+              <li>Up to 6 seats</li>
+            </ul>
+            <button>Get started with Pro</button>
+          </div>
 
-        <Layout.Section>
-          <LegacyCard>
-            <LegacyCard.Section>
-              <Text variant="headingLg" as="h2">
-                Enterprise Plan
-              </Text>
-              <Text color="subdued">
-                Unlock all features with unlimited locations.
-              </Text>
-              <Text variant="headingLg" as="p">$50/month</Text>
-              <Button primary>Choose Plan</Button>
-            </LegacyCard.Section>
-          </LegacyCard>
-        </Layout.Section>
-      </Layout>
-    </Page>
+          <div className="pricing-plan pricing-enterprise">
+            <h3>Enterprise</h3>
+            <h2>{isAnnual ? 'Custom' : 'Custom'}</h2>
+            <p>Per user/month, billed {isAnnual ? 'annually' : 'monthly'}</p>
+            <ul>
+              <li>Everything in Pro</li>
+              <li>Up to 5 team members</li>
+              <li>100 monitors</li>
+              <li>15 status pages</li>
+              <li>200+ integrations</li>
+            </ul>
+            <button>Get started with Enterprise</button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
-}
+};
+
+export default Pricing;

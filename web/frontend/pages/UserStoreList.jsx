@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import "../styles/App.css";
 import homeTrophy from "../assets/home-trophy.png";
 import axios from "axios";
@@ -6,7 +6,8 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import "../styles/bounce.css";
-
+import SettingsDrawer from "./SettingsDrawer";
+import { SettingsContext } from "../context/SettingsContext";
 const customIcon = new L.Icon({
   iconUrl:
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.4/images/marker-icon.png",
@@ -20,17 +21,25 @@ const customIcon = new L.Icon({
   shadowSize: [41, 41],
 });
 
-const UserStoreListt = () => {
+const UserStoreList = () => {
+  const {settings} = useContext(SettingsContext);
   const [stores, setStores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchLocation, setSearchLocation] = useState("");
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
-  const [isOpen, setIsOpen] = useState(null); // null for all stores, true for open, false for closed
+  const [isOpen, setIsOpen] = useState(null);
   const [selectedStoreId, setSelectedStoreId] = useState(null);
   const [selectedStoreLocation, setSelectedStoreLocation] = useState(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [storeLimit, setStoreLimit] = useState(1);
 
-  const fetchStores = (location = "", category = "", openStatus = null) => {
+  const fetchStores = (
+    location = "",
+    category = "",
+    openStatus = null,
+    limit = 1
+  ) => {
     setLoading(true);
     let url = "http://localhost:5175/api/v1/stores/published";
     if (category) {
@@ -41,6 +50,9 @@ const UserStoreListt = () => {
       url = `http://localhost:5175/api/v1/stores/status?openStatus=${
         openStatus ? "open" : "closed"
       }`;
+      if (limit) {
+        url += `&limit=${limit}`;
+      }
     }
 
     axios
@@ -67,28 +79,31 @@ const UserStoreListt = () => {
   };
 
   useEffect(() => {
-    fetchStores(); 
-    fetchCategories(); 
+    fetchStores();
+    fetchCategories();
   }, []);
 
   const handleLocationSearch = (e) => {
     e.preventDefault();
-    fetchStores(searchLocation, selectedCategory); 
+    fetchStores(searchLocation, selectedCategory);
   };
 
   const handleCategoryChange = (e) => {
     setSelectedCategory(e.target.value);
-    fetchStores(searchLocation, e.target.value); 
+    fetchStores(searchLocation, e.target.value);
   };
 
   const handleToggle = () => {
     const newStatus = !isOpen;
     setIsOpen(newStatus);
-    fetchStores(searchLocation, selectedCategory, newStatus); 
+    fetchStores(searchLocation, selectedCategory, newStatus);
+  };
+  const toggleDrawer = () => {
+    setIsDrawerOpen(!isDrawerOpen);
   };
   const printStoreDetails = (store) => {
     const printWindow = window.open("", "_blank", "width=800,height=600");
-    
+
     printWindow.document.write(`
       <html>
         <head>
@@ -144,10 +159,19 @@ const UserStoreListt = () => {
             <div className="sl-store-left">
               <h2>Store List</h2>
             </div>
+
             <div className="sl-store-right">
-              <button className="st-list-btn-setting">
-               <a href="/settings"> Store locator setting</a>
-              </button>
+              <div className="st-list-btn-setting">
+                <button onClick={toggleDrawer}>
+                  {isDrawerOpen ? "Close Settings" : "Open Settings"}
+                </button>
+                {isDrawerOpen && (
+                  <SettingsDrawer
+                    isOpen={isDrawerOpen}
+                    toggleDrawer={toggleDrawer}
+                  />
+                )}
+              </div>
             </div>
           </div>
           <div className="store-search">
@@ -162,7 +186,6 @@ const UserStoreListt = () => {
                   placeholder="Search by location"
                 />
               </form>
-              
             </div>
             <div>
               <label>Category</label>
@@ -200,6 +223,8 @@ const UserStoreListt = () => {
           </div>
 
           <div className="store-list-map">
+            <SettingsDrawer onLimitChange={setStoreLimit} />
+
             <div className="store-list">
               {stores.map((store, index) => (
                 <div
@@ -208,7 +233,7 @@ const UserStoreListt = () => {
                   onMouseEnter={() => setSelectedStoreId(store._id)}
                   onMouseLeave={() => setSelectedStoreId(null)}
                 >
-                  <h2 className="number-shop">Store Number :{index+ 1 }</h2>
+                  <h2 className="number-shop">Store Number :{index + 1}</h2>
                   <div className="list-store-main">
                     <div className="store-image">
                       <img src={homeTrophy} alt="Store logo" />
@@ -227,10 +252,18 @@ const UserStoreListt = () => {
                     </div>
                   </div>
                   <div className="deatis-btn-main">
-                    <button className="st-list-button st-list-button-active" onClick={() => printStoreDetails(store)}>
+                    <button
+                      className="st-list-button st-list-button-active"
+                      onClick={() => printStoreDetails(store)}
+                    >
                       Print
                     </button>
-                    <button className="st-list-button" onClick={() => handleDirectionClick(store)}>Direction</button>
+                    <button
+                      className="st-list-button"
+                      onClick={() => handleDirectionClick(store)}
+                    >
+                      Direction
+                    </button>
                     <button className="st-list-button">
                       <a
                         href={store.websiteURL}
@@ -246,14 +279,17 @@ const UserStoreListt = () => {
             </div>
             <div className="store-list-placeholder">
               <MapContainer
-              center={
-                selectedStoreLocation
-                  ? selectedStoreLocation
-                  : { lat: 20.5937, lng: 78.9629 }
-              }
-                //  center={[20.5937, 78.9629]}
-                 zoom={5}
-                 style={{ height: "400px", width: "100%" }}
+                center={
+                  selectedStoreLocation
+                    ? selectedStoreLocation
+                    : { lat: 20.5937, lng: 78.9629 }
+                }
+                zoom={5}
+
+
+                style={{ height: "400px", width: "100%",
+                  backgroundColor: settings.mapColor
+                 }}
               >
                 <TileLayer
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -284,6 +320,7 @@ const UserStoreListt = () => {
                       >
                         Website
                       </a>
+    
                     </Popup>
                   </Marker>
                 ))}
@@ -296,6 +333,4 @@ const UserStoreListt = () => {
   );
 };
 
-export default UserStoreListt;
-
-
+export default UserStoreList;
