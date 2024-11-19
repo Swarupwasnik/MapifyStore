@@ -16,6 +16,8 @@
     "extends": "@shopify/stylelint-polaris"
   },
   "dependencies": {
+    "@emotion/react": "^11.13.3",
+    "@emotion/styled": "^11.13.0",
     "@formatjs/intl-locale": "^3.4.6",
     "@formatjs/intl-localematcher": "^0.4.2",
     "@formatjs/intl-pluralrules": "^5.3.1",
@@ -23,6 +25,8 @@
     "@fortawesome/free-regular-svg-icons": "^6.6.0",
     "@fortawesome/free-solid-svg-icons": "^6.6.0",
     "@fortawesome/react-fontawesome": "^0.2.2",
+    "@mui/icons-material": "^6.1.7",
+    "@mui/material": "^6.1.7",
     "@shopify/app-bridge": "^3.7.10",
     "@shopify/app-bridge-react": "^4.1.5",
     "@shopify/i18next-shopify": "^0.2.9",

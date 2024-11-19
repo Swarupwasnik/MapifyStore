@@ -1,11 +1,21 @@
 import React, { useState, useEffect } from "react";
+import { Snackbar, Alert, CircularProgress, Button } from '@mui/material';
+
 import "../styles/App.css";
 import axios from "axios";
 import { useNavigate,useParams } from "react-router-dom";
 const StoreRegister = () => {
   const {storeId} = useParams();
   const [categories, setCategories] = useState([]);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
 
+  const handleCloseSnackbar = () => {
+    setSnackbarOpen(false);
+    setSuccessMessage('');
+    setErrorMessage('');
+  };
   const [formData, setFormData] = useState({
     company: "",
     name: "",
@@ -87,11 +97,10 @@ const StoreRegister = () => {
           "http://localhost:5175/api/v1/category/publishcategory"
         );
 
-        // Ensure categories are set to an array, even if the response data is not as expected
         setCategories(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
         console.error("Failed to load categories.", error);
-        setCategories([]); // Set to an empty array in case of an error
+        setCategories([]); 
       }
     };
     fetchCategories();
@@ -180,18 +189,24 @@ const StoreRegister = () => {
       setLoading(true);
       try {
         if (storeId) {
-          // Update store logic
           await axios.put(`http://localhost:5175/api/v1/stores/updatestore/${storeId}`, formData);
-          alert("Store updated successfully");
+          // alert("Store updated successfully");
+          setSuccessMessage('Store updated successfully');
+
         } else {
-          // Create store logic
           await axios.post('http://localhost:5175/api/v1/stores/addstore', formData);
-          alert("Store created successfully");
+          // alert("Store created successfully");
+          setSuccessMessage('Store created successfully');
+
         }
-        navigate('/'); // Navigate to another page after success
+        navigate('/');
       } catch (error) {
-        console.error("Error saving store:", error);
-        setError("Error saving store");
+        // console.error("Error saving store:", error);
+        // setError("Error saving store");
+        console.error('Error saving store:', error);
+        setErrorMessage('Error saving store');
+        setSnackbarOpen(true);
+  
       }
       setLoading(false);
     };
@@ -476,6 +491,23 @@ const StoreRegister = () => {
                 </button>
               </div>
             </form>
+            <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        {successMessage && (
+          <Alert onClose={handleCloseSnackbar} severity="success" variant="filled">
+            {successMessage}
+          </Alert>
+        )}
+        {errorMessage && (
+          <Alert onClose={handleCloseSnackbar} severity="error" variant="filled">
+            {errorMessage}
+          </Alert>
+        )}
+      </Snackbar>
           </div>
         </div>
       </div>

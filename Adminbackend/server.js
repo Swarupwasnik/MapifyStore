@@ -16,7 +16,6 @@ import WebSocket, { WebSocketServer } from 'ws';
 import categoryRoutes from "./routes/categoryRoutes.js"
 import settingsRoutes from "../Adminbackend/routes/settingsRoutes.js";
 
-// Import the auth routes
 
 dotenv.config();
 console.log('Environment variables loaded:', process.env);

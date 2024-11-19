@@ -3,7 +3,7 @@
 client_id = "b99d9e7797e3cc43d591fd60c41b90e3"
 name = "new one"
 handle = "new-one-10"
-application_url = "https://revenue-manual-estonia-rim.trycloudflare.com"
+application_url = "https://behalf-vs-entitled-fed.trycloudflare.com"
 embedded = true
 
 [build]
@@ -274,7 +274,22 @@ redirect_urls = [
   "https://restored-ind-intro-preferences.trycloudflare.com/api/auth/callback",
   "https://revenue-manual-estonia-rim.trycloudflare.com/auth/callback",
   "https://revenue-manual-estonia-rim.trycloudflare.com/auth/shopify/callback",
-  "https://revenue-manual-estonia-rim.trycloudflare.com/api/auth/callback"
+  "https://revenue-manual-estonia-rim.trycloudflare.com/api/auth/callback",
+  "https://employee-oct-warehouse-thesaurus.trycloudflare.com/auth/callback",
+  "https://employee-oct-warehouse-thesaurus.trycloudflare.com/auth/shopify/callback",
+  "https://employee-oct-warehouse-thesaurus.trycloudflare.com/api/auth/callback",
+  "https://jefferson-currently-bookmarks-finals.trycloudflare.com/auth/callback",
+  "https://jefferson-currently-bookmarks-finals.trycloudflare.com/auth/shopify/callback",
+  "https://jefferson-currently-bookmarks-finals.trycloudflare.com/api/auth/callback",
+  "https://printer-clinic-limit-indianapolis.trycloudflare.com/auth/callback",
+  "https://printer-clinic-limit-indianapolis.trycloudflare.com/auth/shopify/callback",
+  "https://printer-clinic-limit-indianapolis.trycloudflare.com/api/auth/callback",
+  "https://stake-gotta-sculpture-whats.trycloudflare.com/auth/callback",
+  "https://stake-gotta-sculpture-whats.trycloudflare.com/auth/shopify/callback",
+  "https://stake-gotta-sculpture-whats.trycloudflare.com/api/auth/callback",
+  "https://behalf-vs-entitled-fed.trycloudflare.com/auth/callback",
+  "https://behalf-vs-entitled-fed.trycloudflare.com/auth/shopify/callback",
+  "https://behalf-vs-entitled-fed.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
