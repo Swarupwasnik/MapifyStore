@@ -94,9 +94,9 @@ import serveStatic from "serve-static";
 import dotenv from 'dotenv';
 import cors from 'cors';
 import mongoose from 'mongoose';
-import shopify from "./shopify.js";
+import shopify from "../Adminbackend/shopify.js";
 import productCreator from "./product-creator.js";
-import PrivacyWebhookHandlers from "./privacy.js";
+import PrivacyWebhookHandlers from "../Adminbackend/privacy.js";
 
 dotenv.config();
 

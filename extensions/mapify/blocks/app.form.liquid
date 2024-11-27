@@ -1,0 +1,85 @@
+{% schema %}
+{
+  "name": "App Registration",
+  "target": "section",
+  "class": "app-dashboard-form",
+  "stylesheet": "app.form.css",
+  "javascript": "app-form.js",
+  "settings": [
+    {
+      "type": "text",
+      "id": "form_title",
+      "label": "App Form Title",
+      "default": "App Registration"
+    }
+  ]
+}
+{% endschema %}
+
+<div class="app-form">
+
+  <div class="store-list-wrap">
+    <div class="container">
+      <div class="store-list-container cd-store-locator">
+        <div class="store-list-main">
+          <div class="sl-store-left">
+            <h2>Store on the Map</h2>
+          </div>
+          <div class="sl-store-right">
+            <!-- <button class="st-list-btn-setting">Store locator setting</button> -->
+          </div>
+        </div>
+        <div class="store-search">
+          <div>
+            <label>Search Location</label>
+            <input type="text" placeholder="Enter location" id="searchLocation">
+          </div>
+          <div>
+            <label for="category">Category</label>
+            <select id="category" name="category">
+              <option value="">Select category</option>
+            </select>
+          </div>
+          <div class="slider-container distnace-flex">
+            <div>
+              <label>Distance Range</label>
+              <input id="distanceSlider" type="range" min="100" max="1000"  value="10" oninput="updateDistanceLabel(this.value)">
+            </div>
+            <div>
+              <span  id="distanceLabel">10km - 80km</span>
+            </div>
+          </div>
+          <div class="store-list-container">
+            <div class="status-toggle">
+              <!--
+                <label class="toggle-label-close">Close</label>
+                <div class="list-toggle-switch">
+                  <div class="list-toggle-circle"></div>
+                </div>
+              -->
+              <label class="switch">
+                <input type="checkbox" id="statusSwitch" checked>
+                <span class="slider round"></span>
+              </label>
+              <label class="toggle-label-open active" id="statusLabel">Open</label>
+              <div id="storeListContainer"></div>
+
+            </div>
+          </div>
+        </div>
+        <div class="store-list-map">
+          <div class="store-list">
+            <ul id="storeList"></ul>
+          </div>
+
+          <div class="store-list-placeholder" id="map" style="height: 400px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script src="{{ 'app-form.js' | asset_url }}" defer></script>
+<link rel="stylesheet" href="{{ 'app-form.css' | asset_url }}">

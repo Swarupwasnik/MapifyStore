@@ -22,7 +22,7 @@ const customIcon = new L.Icon({
 });
 
 const UserStoreList = () => {
-  const {settings} = useContext(SettingsContext);
+  const { settings } = useContext(SettingsContext);
   const [stores, setStores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchLocation, setSearchLocation] = useState("");
@@ -285,11 +285,11 @@ const UserStoreList = () => {
                     : { lat: 20.5937, lng: 78.9629 }
                 }
                 zoom={5}
-
-
-                style={{ height: "400px", width: "100%",
-                  backgroundColor: settings.mapColor
-                 }}
+                style={{
+                  height: "400px",
+                  width: "100%",
+                  backgroundColor: settings.mapColor,
+                }}
               >
                 <TileLayer
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -320,7 +320,6 @@ const UserStoreList = () => {
                       >
                         Website
                       </a>
-    
                     </Popup>
                   </Marker>
                 ))}

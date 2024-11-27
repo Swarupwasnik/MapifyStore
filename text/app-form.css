@@ -1,0 +1,497 @@
+/* General styling for the app form */
+.app-form {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .app-form h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+  }
+  
+  /* Styling for form groups */
+  .form-group {
+    margin-bottom: 15px;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+  }
+  
+  .form-group input,
+  .form-group select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+  
+  .form-group input[type="range"] {
+    width: calc(100% - 20px);
+    margin-right: 10px;
+  }
+  
+  /* Toggle status styling */
+  .toggle-status {
+    display: flex;
+    align-items: center;
+  }
+  
+  .toggle-status label {
+    flex: 1;
+  }
+  
+  /* Styling for the submit button */
+  .btn-submit {
+    display: inline-block;
+    background-color: #007bff;
+    color: #fff;
+    padding: 10px 20px;
+    text-align: center;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 20px;
+    transition: background-color 0.3s;
+  }
+  
+  .btn-submit:hover {
+    background-color: #0056b3;
+  }
+  
+  /* Store list styling */
+  .store-list {
+    margin-top: 30px;
+  }
+  
+  .store-list h2 {
+    margin-bottom: 10px;
+  }
+  
+  .store-list ul {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  .store-list li {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  /* Store map styling */
+  .store-map {
+    margin-top: 30px;
+  }
+  
+  .store-map h2 {
+    margin-bottom: 10px;
+  }
+  
+  #map {
+    height: 400px;
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }
+  
+
+  /* new */
+  
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+  }
+  body {  
+    color: #333;
+    background-color: #f5f5f5;
+  }
+  .store-reigistration-wrap{
+    width:100%;
+    position: relative;
+  }
+  .container {    
+    width: 100%;
+  }
+  .main-content {
+    flex: 1;
+    padding: 20px;
+  }
+  .cd-header-nav a {
+      text-decoration: none;
+      color: #000;
+      font-size: 16px;
+      padding-right: 5px;
+      font-weight: 600;
+  }
+  header.cd-header-nav nav {
+      margin-top: 20px;
+  }
+  .cd-header-nav h1 {
+    font-size: 24px;
+    padding-left:8px;
+  }
+  header nav a {
+    margin: 0 10px;
+    color: #007bff;
+    text-decoration: none;
+  }
+  header nav .active {
+    font-weight: bold;
+    color: #333;
+  }
+  .form-container {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+  .form-container h2 {
+    margin-bottom: 20px;
+  }
+  section {
+    margin-bottom: 20px;
+  }
+  section h3 {
+    margin-bottom: 10px;
+    color: #666;
+  }
+  .form-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+  }
+  .cd-store-locator input, .cd-store-locator select, .cd-store-locator textarea {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    width: 100%;
+  }
+  .cd-store-locator textarea {
+    resize: vertical;
+  }
+  .cd-address-main{
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      gap: 30px;
+      align-items: self-start;
+  }
+  .cd-address-left {
+      width: 50%;
+  }
+  .cd-address-right {
+      width: 50%;
+  }
+  .map-placeholder {
+    height: 200px;
+    background: #e2e2e2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #888;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-top: 10px;
+  }
+  .store-hours {
+    width:100% ;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+  }
+  .store-hours h2 {
+    font-size: 18px;
+    color: #333;
+    margin-bottom: 15px;
+  }
+  .hours-container {
+    display: flex;
+    flex-direction: column;
+  }
+  .day-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  .day-row label {
+    width: 80px;
+    color: #333;
+  }
+  .cd-store-locator .toggle-switch {
+    appearance: none;
+    width: 40px;
+    height: 20px;
+    background: #ccc;
+    border-radius: 10px;
+    position: relative;
+    outline: none;
+    cursor: pointer;
+    margin-right: 10px;
+  }
+  .cd-store-locator .toggle-switch:checked {
+    background: #007bff;
+  }
+  .cd-store-locator .toggle-switch:checked::after {
+    left: 20px;
+  }
+  .cd-store-locator .toggle-switch::after {
+    content: "";
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    background: #fff;
+    border-radius: 50%;
+    top: 1px;
+    left: 2px;
+    transition: 0.2s;
+  }
+  .cd-store-locator .time-input {
+    width: 80px;
+    padding: 5px;
+    font-size: 14px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    text-align: center;
+  }
+  .closed {
+    color: #888;
+  }
+  .add-day-button {
+      width: 100%;
+      max-width: 200px;
+      display: inline-block;
+      padding: 8px 12px;
+      font-size: 14px;
+      color: #ffff;
+      background-color: #007bff;
+      border: 1px solid #007bff;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 15px;
+      text-align: center;
+  }
+  .add-day-button:hover {
+    background-color: #007bff;
+  }
+  .action-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  .save-button {
+    padding: 8px 12px;
+    color: #fff;
+    background-color: #007bff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .cancel-button {
+    padding: 8px 12px;
+    color: #333;
+    background-color: #f1f1f1;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .agreement {  
+    margin-bottom: 20px;
+  }
+  .store-registration-wrap .agreement-inp{
+      width: auto;
+  }
+  .agreement label {
+    margin-left: 10px;
+    color: #666;
+  }
+  .form-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+  button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  button.save {
+    background-color: #007bff;
+    color: white;
+  }
+  button.cancel {
+    background-color: #ddd;
+    color: #333;
+  }
+  /* store list page start */
+  .store-list-wrap{
+   width:100%;
+   position: relative;
+   background: #fff;
+    margin-top: 40px;
+  }
+  .store-list-main{
+    display: flex;
+    justify-content:space-between;
+    align-items: center;
+  }
+  .sl-store-left h2 {
+    color: #000;
+    font-size: 24px;
+    font-weight: 400;
+  }
+  .app-container {
+    display: flex;    
+  }  
+  .store-list-container {
+    flex: 1;
+    padding: 20px;
+  }  
+  .store-search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 20px 0;
+  }  
+  .store-list-map {
+    display: flex;
+    gap: 20px;
+  }  
+  .store-list {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }  
+  .store-card {
+    position: relative;
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    margin-top: 40px;
+    margin-bottom: 30px;
+  }  
+  .number-shop {
+    background: #95ebeb70;
+    padding: 10px;
+    margin-bottom: 15px;
+    position: absolute;
+    top: -40px;
+    left: 0;
+    width: 100%;
+    color: #007bff;
+    border-radius: 5px;
+  }
+  .store-card h3 {
+    margin: 0;
+    font-size: 18px;
+  }  
+  .store-card button {
+    margin-top: 10px;
+    margin-right: 5px;
+  }  
+  .store-list-placeholder {
+    width: 50%;
+    height: 400px;
+    background-color: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: #888;
+  } 
+  .deatis-btn-main {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+}
+  .st-list-button{
+    width:100%;
+    padding: 8px 12px;
+    color: #000;
+    background-color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid #ddd
+  }
+  .st-list-button-active{
+    background-color: #007bff;
+    color: white;
+  }
+  .distnace-flex {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .distnace-flex span {
+    background: #ddd;
+    padding: 5px;
+ }
+ .status-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.status-toggle label {
+  font-size: 14px;
+  color: #555;
+}
+.status-toggle label.active {
+  color: #000; /* Active color for selected state */
+  font-weight: bold;
+}
+.list-toggle-switch {
+  width: 40px;
+  height: 20px;
+  background-color: #ddd;
+  border-radius: 20px;
+  position: relative;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+.list-toggle-switch .list-toggle-circle {
+  width: 18px;
+  height: 18px;
+  background-color: #fff;
+  border-radius: 50%;
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  transition: all 0.3s;
+}
+.list-toggle-switch .list-toggle-circle.open {
+  left: 20px; 
+  background-color: #007bff;
+}
+.list-store-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.store-image{
+  width:40%;
+}
+.store-image img {
+  max-width: 100%;
+}
+.store-deatils{
+  width:60%;
+}
+   /* store list page end */

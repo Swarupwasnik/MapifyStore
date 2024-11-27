@@ -1,6 +1,9 @@
 import { SuperfaceClient } from "@superfaceai/one-sdk";
 import Category from "../models/CategoryModel.js";
 import Store from "../models/StoreModel.js";
+import moment from "moment";
+import { retry } from "../services/retryService.js";
+import mongoose from "mongoose";
 
 const sdk = new SuperfaceClient();
 
@@ -14,6 +17,38 @@ export const getCoordinates = async (req, res) => {
     res
       .status(500)
       .json({ error: "Error retrieving coordinates", details: error.message });
+  }
+};
+export const getStoresWithCoordinates = async (req, res) => {
+  try {
+    const stores = await Store.find().populate("category");
+
+    const storesWithCoordinates = [];
+    for (const store of stores) {
+      try {
+        const coordinates = await retry(() =>
+          geocodeLocation(store.address.city)
+        );
+        storesWithCoordinates.push({
+          ...store.toObject(),
+          latitude: coordinates.latitude,
+          longitude: coordinates.longitude,
+        });
+      } catch (error) {
+        console.warn(
+          `Failed to retrieve coordinates for store: ${store.name}`,
+          error.message
+        );
+      }
+    }
+
+    res.json(storesWithCoordinates);
+  } catch (error) {
+    console.error("Error retrieving stores with coordinates:", error);
+    res.status(500).json({
+      error: "Error retrieving stores with coordinates",
+      details: error.message,
+    });
   }
 };
 
@@ -97,6 +132,10 @@ export const addStore = async (req, res) => {
         latitude: coordinates.latitude,
         longitude: coordinates.longitude,
       },
+      location: {
+        type: "Point",
+        coordinates: [coordinates.longitude, coordinates.latitude] // GeoJSON format
+      },
       workingHours,
       agreeToTerms,
       websiteURL,
@@ -114,6 +153,8 @@ export const addStore = async (req, res) => {
       .json({ error: "Error adding store", details: error.message });
   }
 };
+
+
 
 export const updateStore = async (req, res) => {
   try {
@@ -187,6 +228,17 @@ export const updateStore = async (req, res) => {
   }
 };
 
+
+
+
+
+
+
+
+
+
+
+
 export const deleteStore = async (req, res) => {
   try {
     const { storeId } = req.params;
@@ -199,30 +251,6 @@ export const deleteStore = async (req, res) => {
     res
       .status(500)
       .json({ error: "Error deleting store", details: error.message });
-  }
-};
-
-export const getStoresWithCoordinates = async (req, res) => {
-  try {
-    const stores = await Store.find().populate("category");
-    const storesWithCoordinates = await Promise.all(
-      stores.map(async (store) => {
-        const coordinates = await geocodeLocation(store.address.city);
-        return {
-          ...store.toObject(),
-          latitude: coordinates.latitude,
-          longitude: coordinates.longitude,
-        };
-      })
-    );
-
-    res.json(storesWithCoordinates);
-  } catch (error) {
-    console.error("Error retrieving stores with coordinates:", error);
-    res.status(500).json({
-      error: "Error retrieving stores with coordinates",
-      details: error.message,
-    });
   }
 };
 
@@ -280,7 +308,7 @@ export const searchStoresByCategory = async (req, res) => {
 
     const stores = await Store.find({
       category: categoryData._id,
-      published: true, 
+      published: true,
     });
 
     if (stores.length === 0) {
@@ -297,7 +325,7 @@ export const searchStoresByCategory = async (req, res) => {
 
 export const getAllStores = async (req, res) => {
   try {
-    const stores = await Store.find().populate("category");
+    const stores = await retry(() => Store.find().populate("category"));
     res.json(stores);
   } catch (error) {
     console.error("Error retrieving all stores:", error);
@@ -306,6 +334,18 @@ export const getAllStores = async (req, res) => {
       .json({ error: "Error retrieving all stores", details: error.message });
   }
 };
+
+// export const getAllStores = async (req, res) => {
+//   try {
+//     const stores = await Store.find().populate("category");
+//     res.json(stores);
+//   } catch (error) {
+//     console.error("Error retrieving all stores:", error);
+//     res
+//       .status(500)
+//       .json({ error: "Error retrieving all stores", details: error.message });
+//   }
+// };
 
 export const togglePublishStore = async (req, res) => {
   try {
@@ -330,35 +370,6 @@ export const togglePublishStore = async (req, res) => {
   }
 };
 
-
-// export const togglePublishStore = async (req, res) => {
-//   try {
-//     const store = await Store.findById(req.params.id);
-//     if (!store) {
-//       return res.status(404).json({ error: "Store not found" });
-//     }
-
-//     store.published = req.body.published;
-//     await store.save();
-
-//     res
-//       .status(200)
-//       .json({
-//         message: `Store ${
-//           store.published ? "published" : "unpublished"
-//         } successfully`,
-//       });
-//   } catch (error) {
-//     console.error("Error updating store publish status:", error);
-//     res.status(500).json({ error: "Failed to update store publish status" });
-//   }
-// };
-
-
-
-
-
-
 export const getPublishedStores = async (req, res) => {
   try {
     const stores = await Store.find({ published: true });
@@ -374,5 +385,51 @@ export const getUnpublishedStores = async (req, res) => {
     res.status(200).json(stores);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch unpublished stores" });
+  }
+};
+
+export const getStoresByStatus = async (req, res) => {
+  try {
+    const { status } = req.query;
+
+    if (!status || (status !== "open" && status !== "close")) {
+      return res
+        .status(400)
+        .json({ error: "Invalid status. Use 'open' or 'close'." });
+    }
+
+    const currentTime = moment();
+
+    const stores = await Store.find();
+
+    const filteredStores = stores.filter((store) => {
+      const { openTime, closeTime } = store.workingHours;
+      const storeOpenTime = moment(openTime, "HH:mm");
+      const storeCloseTime = moment(closeTime, "HH:mm");
+
+      const isOpen = currentTime.isBetween(storeOpenTime, storeCloseTime);
+
+      return status === "open" ? isOpen : !isOpen;
+    });
+
+    res.status(200).json({ status, stores: filteredStores });
+  } catch (error) {
+    console.error("Error fetching store list:", error);
+    res
+      .status(500)
+      .json({ error: "Error fetching store list", details: error.message });
+  }
+};
+
+export const getStoreById = async (req, res) => {
+  try {
+    const store = await Store.findById(req.params.id);
+    if (!store) {
+      return res.status(404).json({ error: "Store not found" });
+    }
+    res.json(store);
+  } catch (error) {
+    console.error("Error fetching store by ID:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };

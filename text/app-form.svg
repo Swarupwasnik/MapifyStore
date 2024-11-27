@@ -1,0 +1,99 @@
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById("app-registration-form");
+    const searchLocationInput = document.getElementById("searchLocation");
+    const categorySelect = document.getElementById("category");
+    const statusToggle = document.getElementById("statusToggle");
+    const distanceRangeInput = document.getElementById("distanceRange");
+    const distanceRangeDisplay = document.getElementById("distanceRangeDisplay");
+  
+    // Initialize map with OpenStreetMap tiles
+    let map = L.map('map').setView([20.5937, 78.9629], 5); // Initial map view for India
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+  
+    const shop = "quickstart-2770d800.myshopify.com"; // Replace this with dynamic shop if needed
+  
+    // Function to fetch stores
+    const fetchStores = (location = "", category = "", openStatus = null, distanceRange = "10", limit = 10) => {
+      let url = `http://localhost:5175/api/v1/stores/published?shop=${shop}`;
+      
+      if (category) {
+        url = `http://localhost:5175/api/v1/stores/category?category=${category}&shop=${shop}`;
+      } else if (location) {
+        url = `http://localhost:5175/api/v1/stores/location?location=${location}&shop=${shop}`;
+      } else if (openStatus !== null) {
+        url = `http://localhost:5175/api/v1/stores/status?openStatus=${openStatus ? "open" : "closed"}&shop=${shop}`;
+        if (limit) {
+          url += `&limit=${limit}`;
+        }
+      }
+  
+      if (distanceRange) {
+        url += `&distance=${distanceRange}`;
+      }
+  
+      axios
+        .get(url)
+        .then((response) => {
+          setStores(response.data);
+        })
+        .catch((error) => {
+          console.error("Error fetching data:", error);
+        });
+    };
+  
+    // Update the display of the range value
+    distanceRangeInput.addEventListener("input", (event) => {
+      distanceRangeDisplay.textContent = `${event.target.value}km - 80km`;
+    });
+  
+    // Handling form submission
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const location = searchLocationInput.value;
+      const category = categorySelect.value;
+      const openStatus = statusToggle.checked;
+      const distanceRange = distanceRangeInput.value;
+  
+      fetchStores(location, category, openStatus, distanceRange);
+    });
+  
+    // Function to set stores in the UI (list and map)
+    const setStores = (stores) => {
+      const storeList = document.getElementById("storeList");
+      storeList.innerHTML = ""; // Clear the list before rendering new stores
+  
+      stores.forEach((store) => {
+        const listItem = document.createElement("li");
+        listItem.textContent = `${store.name}, ${store.address.city}`;
+        storeList.appendChild(listItem);
+  
+        if (store.address.latitude && store.address.longitude) {
+          L.marker([store.address.latitude, store.address.longitude])
+            .addTo(map)
+            .bindPopup(`<b>${store.name}</b><br>${store.address.city}`);
+        }
+      });
+    };
+  
+    // Fetch categories dynamically from the API
+    axios
+      .get(`http://localhost:5175/api/v1/category/getcategory?shop=${shop}`)
+      .then((response) => {
+        const categories = response.data.categories;
+        categories.forEach((category) => {
+          const option = document.createElement("option");
+          option.value = category.name;
+          option.textContent = category.name;
+          categorySelect.appendChild(option);
+        });
+      })
+      .catch((error) => {
+        console.error("Error fetching categories:", error);
+      });
+  
+    // Optional: Initially fetch some stores (e.g., all stores or a specific category)
+    fetchStores();
+  });
+  

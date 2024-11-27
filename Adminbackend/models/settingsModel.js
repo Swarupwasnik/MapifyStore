@@ -1,7 +1,6 @@
 
 import mongoose from "mongoose";
 
-// Define the schema for settings
 const settingsSchema = new mongoose.Schema({
   companyName: {
     type: String,
@@ -38,7 +37,6 @@ const settingsSchema = new mongoose.Schema({
   }
 });
 
-// Create the model from the schema
 const Settings = mongoose.model("Settings", settingsSchema);
 
 export default Settings;

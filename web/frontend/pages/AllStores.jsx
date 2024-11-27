@@ -33,6 +33,7 @@ import {
 import { Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import retryFetch from "../utils/utils";
 
 const AllStore = () => {
   const [stores, setStores] = useState([]);
@@ -49,6 +50,8 @@ const AllStore = () => {
   const [isEditing, setIsEditing] = useState(false);
 
   const [selectedRows, setSelectedRows] = useState([]);
+  const debounceTimeout = 500; // Delay for debounce
+  let debounceTimer;
 
   const handleSelect = (index) => {
     if (selectedRows.includes(index)) {
@@ -74,12 +77,13 @@ const AllStore = () => {
     transform: "translate(-50%, -50%)",
     width: "80%",
     maxHeight: "80%",
-    bgcolor: "background.paper",
+    bgcolor: "white",
     boxShadow: 24,
     p: 4,
     overflowY: "auto",
     borderRadius: "8px",
   };
+
   const filterOptions = [
     { label: "All Stores", value: "all" },
     { label: "Published Stores", value: "published" },
@@ -95,32 +99,40 @@ const AllStore = () => {
     setIsEditing(true);
   };
 
-  useEffect(() => {
-    fetchStores();
-  }, [filter]);
+
 
   useEffect(() => {
     fetchCategories();
   }, []);
 
-  const fetchStores = async () => {
-    setLoading(true);
-    try {
-      const endpoint =
-        filter === "published"
-          ? "http://localhost:5175/api/v1/stores/published"
-          : filter === "unpublished"
-          ? "http://localhost:5175/api/v1/stores/unpublished"
-          : "http://localhost:5175/api/v1/stores/stores";
-      const response = await axios.get(endpoint);
-      setStores(response.data);
-      setLoading(false);
-    } catch (err) {
-      setError("Error fetching stores");
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    const fetchStores = async () => {
+      setLoading(true);
+      try {
+        const endpoint =
+          filter === "published"
+            ? "http://localhost:5175/api/v1/stores/published?shop=quickstart-2770d800.myshopify.com"
+            : filter === "unpublished"
+            ? "http://localhost:5175/api/v1/stores/unpublished?shop=quickstart-2770d800.myshopify.com"
+            : "http://localhost:5175/api/v1/stores/stores?shop=quickstart-2770d800.myshopify.com";
 
+        const response = await retryFetch(endpoint, { method: "GET" });
+        setStores(response.data);
+      } catch (err) {
+        setError(
+          err.response?.status === 429
+            ? "Too many requests. Please try again later."
+            : "Error fetching stores."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStores();
+  }, [filter]);
+
+ 
   const fetchCategories = async () => {
     try {
       const response = await axios.get(
@@ -131,7 +143,16 @@ const AllStore = () => {
       setError("Error fetching categories");
     }
   };
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchValue(value);
 
+    // Debounce mechanism
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      fetchStores();
+    }, debounceTimeout);
+  };
   const handleTogglePublished = async (storeId, isPublished) => {
     setError("");
     setSuccess("");
@@ -300,7 +321,8 @@ const AllStore = () => {
         <TextField
           label="Search Stores"
           value={searchValue}
-          onChange={(e) => setSearchValue(e.target.value)}
+          onChange={handleSearchChange}
+          // onChange={(e) => setSearchValue(e.target.value)}
           variant="outlined"
         />
         <FormControl variant="outlined">
@@ -321,9 +343,15 @@ const AllStore = () => {
           Add Store
         </Button>
       </Stack>
+      <Snackbar open={!!success} autoHideDuration={3000}>
+        <Alert severity="success">{success}</Alert>
+      </Snackbar>
+      <Snackbar open={!!error} autoHideDuration={3000}>
+        <Alert severity="error">{error}</Alert>
+      </Snackbar>
 
-      {success && <Alert severity="success">{success}</Alert>}
-      {error && <Alert severity="error">{error}</Alert>}
+      {/* {success && <Alert severity="success">{success}</Alert>}
+      {error && <Alert severity="error">{error}</Alert>} */}
 
       <Card variant="outlined" style={{ marginTop: "20px" }}>
         <TableContainer component={Paper}>

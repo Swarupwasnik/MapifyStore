@@ -1,0 +1,72 @@
+{% schema %}
+{
+  "name": "App Registration",
+  "target": "section",
+  "class": "app-dashboard-form",
+  "stylesheet": "app-form.css",
+  "javascript": "app-form.js",
+  "settings": [
+    {
+      "type": "text",
+      "id": "form_title",
+      "label": "App Form Title",
+      "default": "App Registration"
+    }
+  ]
+}
+{% endschema %}
+
+<div class="app-form">
+
+
+
+<h1>{{ section.settings.form_title }}</h1>
+  <form id="app-registration-form">
+    <div class="form-group">
+      <label for="searchLocation">Search Location</label>
+      <input type="text" id="searchLocation" name="searchLocation" placeholder="Search by location" />
+    </div>
+
+    <div class="form-group">
+      <label for="category">Category</label>
+      <select id="category" name="category">
+        <option value="">Select Category</option>
+        <!-- Categories dynamically populated -->
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="distanceRange">Distance Range</label>
+      <input type="range" id="distanceRange" name="distanceRange" min="10" max="80" />
+      <span id="distanceRangeDisplay">10km - 80km</span>
+    </div>
+
+    <div class="form-group">
+      <label>Store Status</label>
+      <div class="toggle-status">
+        <label for="closed" class="inactive">Closed</label>
+        <input type="checkbox" id="statusToggle" name="storeStatus" />
+        <label for="open" class="active">Open</label>
+      </div>
+    </div>
+
+    <button type="submit" class="btn-submit">Search</button>
+  </form>
+
+  <div class="store-list">
+    <h2>Stores</h2>
+    <ul id="storeList">
+      <!-- Store list dynamically rendered here -->
+    </ul>
+  </div>
+
+  <div class="store-map">
+    <h2>Store Map</h2>
+    <div id="map" style="height: 400px;"></div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script src="{{ 'app-form.js' | asset_url }}" defer></script>
+<link rel="stylesheet" href="{{ 'app-form.css' | asset_url }}" />

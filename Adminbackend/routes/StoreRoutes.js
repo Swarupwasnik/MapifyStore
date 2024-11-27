@@ -12,7 +12,7 @@ import {
   searchStoresByLocation,
   searchStoresByCategory,
   getAllStores,
-  togglePublishStore,getPublishedStores,getUnpublishedStores
+  togglePublishStore,getPublishedStores,getUnpublishedStores,getStoresByStatus,getStoreById
 } from '../controllers/StoreController.js';
 const router = express.Router();
 
@@ -22,6 +22,8 @@ router.get('/location', searchStoresByLocation);
 router.get('/category', searchStoresByCategory);
 router.get('/allstores', getAllStores);
 router.get('/stores', getStoresWithCoordinates);
+router.get("/stores-with-coordinates", getStoresWithCoordinates);
+router.get('/store/:id',getStoreById);
 
 router.post('/addstore', addStore);  
 router.put('/updatestore/:storeId', updateStore);
@@ -29,6 +31,7 @@ router.delete('/deletestore/:storeId',  deleteStore);
 router.put('/:id/publish',  togglePublishStore);
 router.get('/published', getPublishedStores);
 router.get('/unpublished', getUnpublishedStores);
+router.get('/status', getStoresByStatus);
 export default router;
 
 

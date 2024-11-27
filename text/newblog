@@ -1,0 +1,66 @@
+<div class="app-form">
+  <!-- <h1>{{ section.settings.form_title }}</h1> -->
+
+  <div class="store-list-wrap">
+    <div class="container">
+      <div class="store-list-container cd-store-locator">
+        <div class="store-list-main">
+          <div class="sl-store-left">
+            <h2>Store on the Map</h2>
+          </div>
+          <div class="sl-store-right">
+            <!-- <button class="st-list-btn-setting">Store locator setting</button> -->
+          </div>
+        </div>
+        <div class="store-search">
+          <div>
+            <label>Search Location</label>
+            <input type="text" placeholder="Enter location" id="searchLocation">
+          </div>
+          <div>
+            <label for="category">Category</label>
+            <select id="category" name="category">
+              <option value="">Select category</option>
+            </select>
+          </div>
+          <div class="slider-container distnace-flex">
+            <div>
+              <label>Distance Range</label>
+              <input type="range" min="10" max="80">
+            </div>
+            <div>
+              <span>10km - 80km</span>
+            </div>
+          </div>
+          <div class="store-list-container">
+            <div class="status-toggle">
+              <!--
+                <label class="toggle-label-close">Close</label>
+                <div class="list-toggle-switch">
+                  <div class="list-toggle-circle"></div>
+                </div>
+              -->
+              <label class="switch">
+                <input type="checkbox" checked>
+                <span class="slider round"></span>
+              </label>
+              <label class="toggle-label-open active">Open</label>
+            </div>
+          </div>
+        </div>
+        <div class="store-list-map">
+          <div class="store-list">
+            <ul id="storeList"></ul>
+          </div>
+
+          <div class="store-list-placeholder" id="map" style="height: 400px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script src="{{ 'app-form.js' | asset_url }}" defer></script>
+<link rel="stylesheet" href="{{ 'app-form.css' | asset_url }}">

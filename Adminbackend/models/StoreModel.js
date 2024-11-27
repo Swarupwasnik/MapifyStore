@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-
+import Location from "./LocationModel.js";
 const StoreSchema = new mongoose.Schema(
   {
     company: { type: String, required: true },
@@ -22,9 +22,11 @@ const StoreSchema = new mongoose.Schema(
       state: { type: String, required: true },
       postalCode: { type: String, required: true },
       country: { type: String, required: true },
+      
       latitude: { type: Number },
       longitude: { type: Number },
     },
+    location: { type: Location.schema, required: false }, 
     workingHours: {
       type: [
         {
@@ -53,24 +55,30 @@ const StoreSchema = new mongoose.Schema(
       ],
       validate: {
         validator: function (value) {
-          return value.length === 7; // Restrict exactly to 7 days
+          return value.length === 7; 
         },
         message: "Working hours must be set for exactly 7 days.",
       },
     },
     additional: { type: String },
     agreeToTerms: { type: Boolean, required: true },
-    published: { type: Boolean, default: false }, // Field to track published status
+    published: { type: Boolean, default: false }, 
   },
   { timestamps: true }
 );
-
-// Method to check if the store is open
+StoreSchema.index({ location: '2dsphere' });
 StoreSchema.methods.isStoreOpen = function () {
+  if (!this.workingHours || !Array.isArray(this.workingHours)) {
+    return false;
+  }
+
   const today = new Date();
   const dayName = today.toLocaleString("en-US", { weekday: "long" });
   const todayHours = this.workingHours.find(
-    (day) => day.day.toLowerCase() === dayName.toLowerCase()
+    (day) =>
+      day &&
+      typeof day.day === "string" &&
+      day.day.toLowerCase() === dayName.toLowerCase()
   );
 
   if (!todayHours || !todayHours.isOpen) {
@@ -87,6 +95,8 @@ StoreSchema.methods.isStoreOpen = function () {
   const currentTime = today.toTimeString().slice(0, 5);
   return currentTime >= openTime && currentTime <= closeTime;
 };
+
+
 
 const Store = mongoose.models.Store || mongoose.model("Store", StoreSchema);
 export default Store;

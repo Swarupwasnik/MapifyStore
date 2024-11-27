@@ -1,24 +1,20 @@
-
-
-import { join } from "path";
-import { readFileSync } from "fs";
 import express from "express";
 import dotenv from "dotenv";
 import morgan from "morgan";
 import cors from "cors";
+import { join } from "path";
 import { createServer } from "http";
 import "@shopify/shopify-api/adapters/node";
 import connectDB from "./config/db.js";
 import { shopifyApi, ApiVersion } from "@shopify/shopify-api";
+import "@shopify/shopify-api/adapters/node";
 import shopifyRoutes from "./routes/shopifyRoutes.js";
 import { SuperfaceClient } from "@superfaceai/one-sdk";
 import StoreRoutes from "./routes/StoreRoutes.js";
 import WebSocket, { WebSocketServer } from "ws";
 import categoryRoutes from "./routes/categoryRoutes.js";
-import settingsRoutes from "./routes/settingsRoutes.js";
-import PrivacyWebhookHandlers from "./handlers/privacy.js";
-import { createProxyMiddleware } from "http-proxy-middleware";
-import locationRoutes from "./routes/locationRoutes.js"
+import settingsRoutes from "../Adminbackend/routes/settingsRoutes.js";
+import { readFileSync } from "fs";
 
 dotenv.config();
 console.log("Environment variables loaded:", process.env);
@@ -44,13 +40,16 @@ const wss = new WebSocketServer({ server });
 
 const corsOptions = {
   origin: (origin, callback) => {
-    const allowedOrigins = [
-      "http://localhost:5175",
-      /^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/,
-      /^https:\/\/[a-z0-9-]+\.myshopify\.com$/
-    ];
+    const allowedLocalhost = "http://localhost:5175";
+    const allowedCloudflarePattern =
+      /^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/;
+    const shopifyPattern = /^https:\/\/[a-z0-9-]+\.myshopify\.com$/;
 
-    if (!origin || allowedOrigins.some(o => typeof o === 'string' ? o === origin : o.test(origin))) {
+    if (
+      !origin ||
+      origin === allowedLocalhost ||
+      allowedCloudflarePattern.test(origin)
+    ) {
       callback(null, true);
     } else {
       callback(new Error("Not allowed by CORS"));
@@ -62,54 +61,30 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+
 app.use(express.json());
 app.use(morgan("dev"));
 
-// Proxy middleware
-app.use('/apps/stores', createProxyMiddleware({
-  target: "https://humanities-halifax-communications-hence.trycloudflare.com", // Your backend target URL
-  changeOrigin: true,
-  pathRewrite: {
-      '^/apps/stores': '/apps/stores', // Rewrite the path as needed
-  },
-  onProxyReq: (proxyReq, req, res) => {
-      proxyReq.setHeader('Host', 'https://humanities-halifax-communications-hence.trycloudflare.com');
-  },
-  onProxyRes: (proxyRes, req, res) => {
-      console.log('Proxy Response Headers:', proxyRes.headers);
-  },
-  onError: (err, req, res) => {
-      console.error('Proxy Error:', err);
-      res.status(500).send('Proxy Error: ' + err.message);
-  },
-  logLevel: 'debug', // Enable logging for debugging
-}));
-
-// Authorization routes
 app.get("/auth", async (req, res) => {
   const shop = req.query.shop;
-  if (!shop) {
-    return res.status(400).send("Shop is required");
-  }
-
-  try {
-    const authRoute = await shopify.auth.beginAuth(req, res, shop, "/auth/callback", false);
-    res.redirect(authRoute);
-  } catch (error) {
-    console.error(`Error initiating Shopify authentication: ${error.message}`, error);
-    res.status(500).send("Error initiating authentication");
-  }
+  if (!shop) return res.status(400).send("Shop is required");
+  const authRoute = await shopify.auth.beginAuth(
+    req,
+    res,
+    shop,
+    "/auth/callback",
+    false
+  );
+  res.redirect(authRoute);
 });
 
 app.get("/auth/callback", async (req, res) => {
-  const { shop, code, hmac, state } = req.query;
-
-  if (!shop || !code || !hmac || !state) {
-    return res.status(400).send("Missing required parameters");
-  }
-
   try {
-    const session = await shopify.auth.validateAuthCallback(req, res, req.query);
+    const session = await shopify.auth.validateAuthCallback(
+      req,
+      res,
+      req.query
+    );
     const accessToken = session.accessToken;
     console.log(`Access token for ${session.shop}: ${accessToken}`);
     res.status(200).send("Authorization successful!");
@@ -119,10 +94,11 @@ app.get("/auth/callback", async (req, res) => {
   }
 });
 
-// Geocode API logic
 const geocodeLocation = async (loc) => {
   const profile = await sdk.getProfile("address/geocoding@3.1.2");
-  const result = await profile.getUseCase("Geocode").perform({ query: loc }, { provider: "nominatim" });
+  const result = await profile
+    .getUseCase("Geocode")
+    .perform({ query: loc }, { provider: "nominatim" });
   return result.unwrap();
 };
 
@@ -139,14 +115,27 @@ app.get("/api/geocode", async (req, res) => {
   }
 });
 
-// Routes
+app.post("/api/route", async (req, res) => {
+  try {
+    const { locations } = req.body;
+    if (!Array.isArray(locations) || locations.length !== 2) {
+      return res.status(422).json({ error: "Expected 2 waypoints" });
+    }
+    const waypoints = await Promise.all(
+      locations.map((location) => geocodeLocation(location))
+    );
+    res.json({ waypoints });
+  } catch (error) {
+    res.status(500).json(error);
+  }
+});
+
+app.use("/api/*",shopify.va)
 app.use("/api/v1/shopify", shopifyRoutes);
 app.use("/api/v1/category", categoryRoutes);
 app.use("/api/v1/stores", StoreRoutes);
-app.use('/api/v1/stores', locationRoutes);
-app.use("/api/v1/settings",settingsRoutes);
 
-// WebSocket connection handling
+app.use("/api/v1/settings", settingsRoutes);
 wss.on("connection", (ws) => {
   console.log("WebSocket connection established");
   ws.on("message", (message) => {
@@ -157,12 +146,27 @@ wss.on("connection", (ws) => {
     console.log("WebSocket connection closed");
   });
 });
-
 app.get("/", (req, res) => {
   res.send("<h1>Welcome to Mapify</h1>");
 });
 
+// WebSocket connection handling
+wss.on("connection", (ws, req) => {
+  console.log("WebSocket connection established");
+
+  ws.on("message", (message) => {
+    console.log("Received message:", message);
+    ws.send(`Received: ${message}`);
+  });
+
+  ws.on("close", () => {
+    console.log("WebSocket connection closed");
+  });
+});
+
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`Server running on ${process.env.DEV_MODE} mode on port ${PORT}.`);
+  console.log(
+    `Server running on ${process.env.DEV_MODE} mode on port ${PORT}.`
+  );
 });
