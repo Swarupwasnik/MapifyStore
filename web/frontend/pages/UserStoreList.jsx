@@ -248,6 +248,7 @@ const UserStoreList = () => {
                         {store.phone.countryCode} {store.phone.number}
                       </p>
                       <p>{store.email}</p>
+                      <p>{store.category.value}</p>
                       <p>{store.hours}</p>
                     </div>
                   </div>

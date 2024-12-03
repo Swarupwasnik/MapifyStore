@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Map with Routing</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
+  <style>
+    #mapId {
+      height: 100vh;
+    }
+    .inputBlock, .routeBlock {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 1000;
+      background-color: white;
+      padding: 10px;
+      border-radius: 5px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+    .addloc, .addRoutes button {
+      display: inline-block;
+      margin-top: 10px;
+      background-color: #1EE2C7;
+      border: none;
+      padding: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="routeBlock">
+    <form id="routeForm">
+      <input type="text" id="startLocation" name="location" required placeholder="Starting Point" />
+      <input type="text" id="endLocation" name="location" required placeholder="End Point" />
+      <button type="submit" class="addloc">Find Path</button>
+    </form>
+  </div>
+  
+  <div id="mapId"></div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+  <script>
+    const map = L.map('mapId').setView([31.505, 70.09], 4);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    let routingControl = null;
+
+    async function geocodeLocation(location) {
+      const response = await fetch('http://localhost:5002/api/geocode?' + new URLSearchParams({ location }));
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+      const data = await response.json();
+      return { lat: data.coordinates.latitude, lng: data.coordinates.longitude };
+    }
+
+    document.getElementById('routeForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      
+      const startLocation = document.getElementById('startLocation').value;
+      const endLocation = document.getElementById('endLocation').value;
+
+      try {
+        const startCoords = await geocodeLocation(startLocation);
+        const endCoords = await geocodeLocation(endLocation);
+
+        if (routingControl) {
+          map.removeControl(routingControl);
+        }
+
+        const response = await fetch('http://localhost:5002/api/route', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ locations: [startLocation, endLocation] }),
+        });
+
+        if (!response.ok) {
+          throw new Error(await response.text());
+        }
+
+        const data = await response.json();
+        const waypoints = data.waypoints.map(wp => L.latLng(wp.latitude, wp.longitude));
+        routingControl = L.Routing.control({
+          waypoints: waypoints,
+          draggableWaypoints: false,
+          routeWhileDragging: true,
+        }).addTo(map);
+
+        map.fitBounds(routingControl.getBounds());
+
+      } catch (error) {
+        console.error('Fetch error:', error);
+        alert('Could not find route. Please check your locations.');
+      }
+    });
+  </script>
+</body>
+</html>

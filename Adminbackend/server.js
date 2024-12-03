@@ -15,10 +15,9 @@ import { SuperfaceClient } from "@superfaceai/one-sdk";
 import StoreRoutes from "./routes/StoreRoutes.js";
 import WebSocket, { WebSocketServer } from "ws";
 import categoryRoutes from "./routes/categoryRoutes.js";
-import settingsRoutes from "./routes/settingsRoutes.js";
-import PrivacyWebhookHandlers from "./handlers/privacy.js";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import locationRoutes from "./routes/locationRoutes.js"
+import SettingRoutes from "./routes/SettingRoutes.js";
 
 dotenv.config();
 console.log("Environment variables loaded:", process.env);
@@ -67,10 +66,10 @@ app.use(morgan("dev"));
 
 // Proxy middleware
 app.use('/apps/stores', createProxyMiddleware({
-  target: "https://humanities-halifax-communications-hence.trycloudflare.com", // Your backend target URL
+  target: "https://humanities-halifax-communications-hence.trycloudflare.com", 
   changeOrigin: true,
   pathRewrite: {
-      '^/apps/stores': '/apps/stores', // Rewrite the path as needed
+      '^/apps/stores': '/apps/stores', 
   },
   onProxyReq: (proxyReq, req, res) => {
       proxyReq.setHeader('Host', 'https://humanities-halifax-communications-hence.trycloudflare.com');
@@ -82,7 +81,7 @@ app.use('/apps/stores', createProxyMiddleware({
       console.error('Proxy Error:', err);
       res.status(500).send('Proxy Error: ' + err.message);
   },
-  logLevel: 'debug', // Enable logging for debugging
+  logLevel: 'debug', 
 }));
 
 // Authorization routes
@@ -144,8 +143,7 @@ app.use("/api/v1/shopify", shopifyRoutes);
 app.use("/api/v1/category", categoryRoutes);
 app.use("/api/v1/stores", StoreRoutes);
 app.use('/api/v1/stores', locationRoutes);
-app.use("/api/v1/settings",settingsRoutes);
-
+app.use('/api/v1/settings',SettingRoutes);
 // WebSocket connection handling
 wss.on("connection", (ws) => {
   console.log("WebSocket connection established");
@@ -162,7 +160,7 @@ app.get("/", (req, res) => {
   res.send("<h1>Welcome to Mapify</h1>");
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5175;
 server.listen(PORT, () => {
   console.log(`Server running on ${process.env.DEV_MODE} mode on port ${PORT}.`);
 });

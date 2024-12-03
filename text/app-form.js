@@ -1,4 +1,3 @@
-
 document.addEventListener("DOMContentLoaded", function () {
   const mapContainer = document.getElementById("map");
 
@@ -33,7 +32,6 @@ document.addEventListener("DOMContentLoaded", function () {
       fetchNearbyStores(19.076, 72.8777, distance);
     }
   }
-
   function fetchNearbyStores(latitude, longitude, radius) {
     fetch(
       `http://localhost:5175/api/v1/stores/nearby?latitude=${latitude}&longitude=${longitude}&radius=${radius}&shop=quickstart-2770d800.myshopify.com`
@@ -45,12 +43,68 @@ document.addEventListener("DOMContentLoaded", function () {
         return response.json();
       })
       .then((data) => {
-        console.log(`Fetched Nearby Stores within ${radius} km:`, data);
-        populateStoreList(data);
-        plotStoresOnMap(data);
+        // Extensive logging to understand the data structure
+        console.log("Raw data:", data);
+        console.log("Data type:", typeof data);
+        console.log("Data keys:", Object.keys(data));
+
+        // More robust data extraction
+        let stores = [];
+
+        // Try multiple ways to extract stores
+        if (Array.isArray(data)) {
+          stores = data;
+        } else if (data.stores && Array.isArray(data.stores)) {
+          stores = data.stores;
+        } else if (data.data && Array.isArray(data.data)) {
+          stores = data.data;
+        } else if (data.results && Array.isArray(data.results)) {
+          stores = data.results;
+        } else {
+          console.warn("No stores found in the response");
+          // Clear existing store list
+          const storeList = document.getElementById("storeList");
+          if (storeList) {
+            storeList.innerHTML = "<li>No stores found</li>";
+          }
+          return;
+        }
+
+        console.log("Processed stores:", stores);
+        console.log("Number of stores:", stores.length);
+
+        if (stores.length === 0) {
+          console.warn("No stores found in the nearby search");
+          const storeList = document.getElementById("storeList");
+          if (storeList) {
+            storeList.innerHTML = "<li>No stores found</li>";
+          }
+          return;
+        }
+
+        // Ensure stores have required properties
+        const validStores = stores.filter(
+          (store) =>
+            store.address && store.address.latitude && store.address.longitude
+        );
+
+        console.log("Valid stores:", validStores);
+
+        populateStoreList(validStores);
+        plotStoresOnMap(validStores);
       })
-      .catch((error) => console.error("Error fetching nearby stores:", error));
+      .catch((error) => {
+        console.error("Error fetching nearby stores:", error);
+
+        // Clear existing store list
+        const storeList = document.getElementById("storeList");
+        if (storeList) {
+          storeList.innerHTML = "<li>Error loading stores</li>";
+        }
+      });
   }
+
+
 
   function populateStoreList(data) {
     const storeList = document.querySelector("#storeList");

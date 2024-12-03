@@ -15,7 +15,6 @@
   ]
 }
 {% endschema %}
-
 <div class="app-form">
 
   <div class="store-list-wrap">
@@ -33,6 +32,7 @@
           <div>
             <label>Search Location</label>
             <input type="text" placeholder="Enter location" id="searchLocation">
+
           </div>
           <div>
             <label for="category">Category</label>
@@ -43,7 +43,7 @@
           <div class="slider-container distnace-flex">
             <div>
               <label>Distance Range</label>
-              <input id="distanceSlider" type="range" min="100" max="1000"  value="10" oninput="updateDistanceLabel(this.value)">
+              <input id="distanceSlider" type="range" min="100" max="3000"  value="10" oninput="updateDistanceLabel(this.value)">
             </div>
             <div>
               <span  id="distanceLabel">10km - 80km</span>
@@ -57,29 +57,55 @@
                   <div class="list-toggle-circle"></div>
                 </div>
               -->
+
               <label class="switch">
+
                 <input type="checkbox" id="statusSwitch" checked>
                 <span class="slider round"></span>
+
               </label>
+
               <label class="toggle-label-open active" id="statusLabel">Open</label>
               <div id="storeListContainer"></div>
 
             </div>
           </div>
         </div>
+  
+
+          <div class="store-list-controls">
+  <h3 class="direct">
+    Total Stores: <span id="storeCount">0</span>
+    <button id="printButton" class="print-button">
+      🖨️
+      Print Store List
+    </button>
+  </h3>
+</div>
+
+
         <div class="store-list-map">
+
           <div class="store-list">
+      
+
             <ul id="storeList"></ul>
           </div>
 
           <div class="store-list-placeholder" id="map" style="height: 400px;"></div>
+
+  
         </div>
       </div>
     </div>
   </div>
 </div>
-
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css">
+
 <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 <script src="{{ 'app-form.js' | asset_url }}" defer></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
 <link rel="stylesheet" href="{{ 'app-form.css' | asset_url }}">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />

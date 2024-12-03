@@ -11,6 +11,7 @@ const StoreSchema = new mongoose.Schema(
       countryCode: { type: String, required: true },
       number: { type: String, required: true },
     },
+
     category: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
@@ -22,11 +23,11 @@ const StoreSchema = new mongoose.Schema(
       state: { type: String, required: true },
       postalCode: { type: String, required: true },
       country: { type: String, required: true },
-      
+
       latitude: { type: Number },
       longitude: { type: Number },
     },
-    location: { type: Location.schema, required: false }, 
+    location: { type: Location.schema, required: false },
     workingHours: {
       type: [
         {
@@ -55,18 +56,18 @@ const StoreSchema = new mongoose.Schema(
       ],
       validate: {
         validator: function (value) {
-          return value.length === 7; 
+          return value.length === 7;
         },
         message: "Working hours must be set for exactly 7 days.",
       },
     },
     additional: { type: String },
     agreeToTerms: { type: Boolean, required: true },
-    published: { type: Boolean, default: false }, 
+    published: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
-StoreSchema.index({ location: '2dsphere' });
+StoreSchema.index({ location: "2dsphere" });
 StoreSchema.methods.isStoreOpen = function () {
   if (!this.workingHours || !Array.isArray(this.workingHours)) {
     return false;
@@ -95,8 +96,6 @@ StoreSchema.methods.isStoreOpen = function () {
   const currentTime = today.toTimeString().slice(0, 5);
   return currentTime >= openTime && currentTime <= closeTime;
 };
-
-
 
 const Store = mongoose.models.Store || mongoose.model("Store", StoreSchema);
 export default Store;

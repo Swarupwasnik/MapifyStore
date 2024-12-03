@@ -1,13 +1,28 @@
-
-
 import { SuperfaceClient } from "@superfaceai/one-sdk";
 import Category from "../models/CategoryModel.js";
 import Store from "../models/StoreModel.js";
 import moment from "moment";
 import { retry } from "../services/retryService.js";
+import { findStoresByLocation } from "./locationController.js";
 import mongoose from "mongoose";
-
 const sdk = new SuperfaceClient();
+
+
+const geocodeLocation = async (loc) => {
+  try {
+    const profile = await sdk.getProfile("address/geocoding@3.1.2");
+    const result = await profile.getUseCase("Geocode").perform(
+      { query: loc },
+      { provider: "nominatim" }
+    );
+    const data = result.unwrap();
+    return data;
+  } catch (error) {
+    console.error("Error in geocoding:", error.message);
+    throw new Error("Failed to geocode location");
+  }
+};
+
 
 export const getCoordinates = async (req, res) => {
   try {
@@ -21,6 +36,10 @@ export const getCoordinates = async (req, res) => {
       .json({ error: "Error retrieving coordinates", details: error.message });
   }
 };
+
+
+
+
 export const getStoresWithCoordinates = async (req, res) => {
   try {
     const stores = await Store.find().populate("category");
@@ -52,8 +71,7 @@ export const getStoresWithCoordinates = async (req, res) => {
       details: error.message,
     });
   }
-};
-
+ };
 export const getWaypoints = async (req, res) => {
   try {
     const locations = req.body.locations;
@@ -73,16 +91,15 @@ export const getWaypoints = async (req, res) => {
   }
 };
 
-// Geocoding helper function
-async function geocodeLocation(loc) {
-  const profile = await sdk.getProfile("address/geocoding@3.1.2");
-  const result = await profile
-    .getUseCase("Geocode")
-    .perform({ query: loc }, { provider: "nominatim" });
 
-  const data = result.unwrap();
-  return data;
-}
+
+
+
+
+
+
+;
+
 
 export const addStore = async (req, res) => {
   try {
@@ -115,14 +132,12 @@ export const addStore = async (req, res) => {
         .json({ error: "Some required fields are missing" });
     }
 
-    // Geocode the location based on the city in the address
     const coordinates = await geocodeLocation(address.city);
     const category = await Category.findById(categoryId);
     if (!category) {
       return res.status(404).json({ error: "Category not found" });
     }
 
-    // Create the store with published defaulting to false
     const newStore = new Store({
       company,
       name,
@@ -136,7 +151,7 @@ export const addStore = async (req, res) => {
       },
       location: {
         type: "Point",
-        coordinates: [coordinates.longitude, coordinates.latitude] // GeoJSON format
+        coordinates: [coordinates.longitude, coordinates.latitude], 
       },
       workingHours,
       agreeToTerms,
@@ -155,8 +170,6 @@ export const addStore = async (req, res) => {
       .json({ error: "Error adding store", details: error.message });
   }
 };
-
-
 
 export const updateStore = async (req, res) => {
   try {
@@ -229,17 +242,6 @@ export const updateStore = async (req, res) => {
       .json({ error: "Error updating store", details: error.message });
   }
 };
-
-
-
-
-
-
-
-
-
-
-
 
 export const deleteStore = async (req, res) => {
   try {
@@ -330,7 +332,7 @@ export const searchStoresByCategory = async (req, res) => {
 
 export const getAllStores = async (req, res) => {
   try {
-    const stores = await retry(() => Store.find().populate("category"));
+    const stores = await retry(() => Store.find().populate("category", "name"));
     res.json(stores);
   } catch (error) {
     console.error("Error retrieving all stores:", error);
@@ -389,17 +391,21 @@ export const getPublishedStores = async (req, res) => {
 
 export const getUnpublishedStores = async (req, res) => {
   try {
-    const stores = await Store.find({ published: false });
+    const stores = await Store.find({ published: false }).populate("category", "name");
     res.status(200).json(stores);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch unpublished stores" });
   }
 };
 
+
+
+
 export const getStoresByStatus = async (req, res) => {
   try {
     const { status } = req.query;
 
+    // Validate status query parameter
     if (!status || (status !== "open" && status !== "close")) {
       return res
         .status(400)
@@ -408,16 +414,25 @@ export const getStoresByStatus = async (req, res) => {
 
     const currentTime = moment();
 
-    const stores = await Store.find();
+    // Fetch stores and populate the category field with only the name
+    const stores = await Store.find().populate("category", "name");
 
+    // Filter stores based on working hours and status (open/close)
     const filteredStores = stores.filter((store) => {
-      const { openTime, closeTime } = store.workingHours;
-      const storeOpenTime = moment(openTime, "HH:mm");
-      const storeCloseTime = moment(closeTime, "HH:mm");
+      const { workingHours } = store;
+      if (workingHours && workingHours.length > 0) {
+        const { openTime, closeTime } = workingHours[0]; // Assuming only one working hour entry
 
-      const isOpen = currentTime.isBetween(storeOpenTime, storeCloseTime);
+        const storeOpenTime = moment(openTime, "HH:mm");
+        const storeCloseTime = moment(closeTime, "HH:mm");
 
-      return status === "open" ? isOpen : !isOpen;
+        // Check if the store is open or closed based on current time
+        const isOpen = currentTime.isBetween(storeOpenTime, storeCloseTime);
+
+        return status === "open" ? isOpen : !isOpen;
+      }
+
+      return false; // If no working hours, assume the store is closed
     });
 
     res.status(200).json({ status, stores: filteredStores });
@@ -429,18 +444,93 @@ export const getStoresByStatus = async (req, res) => {
   }
 };
 
+// export const getStoresByStatus = async (req, res) => {
+//   try {
+//     const { status } = req.query;
+
+//     if (!status || (status !== "open" && status !== "close")) {
+//       return res
+//         .status(400)
+//         .json({ error: "Invalid status. Use 'open' or 'close'." });
+//     }
+
+//     const currentTime = moment();
+
+//     const stores = await Store.find().populate("category","name");
+
+//     const filteredStores = stores.filter((store) => {
+//       const { openTime, closeTime } = store.workingHours;
+//       const storeOpenTime = moment(openTime, "HH:mm");
+//       const storeCloseTime = moment(closeTime, "HH:mm");
+
+//       const isOpen = currentTime.isBetween(storeOpenTime, storeCloseTime);
+
+//       return status === "open" ? isOpen : !isOpen;
+//     });
+
+//     res.status(200).json({ status, stores: filteredStores });
+//   } catch (error) {
+//     console.error("Error fetching store list:", error);
+//     res
+//       .status(500)
+//       .json({ error: "Error fetching store list", details: error.message });
+//   }
+// };
+
 export const getStoreById = async (req, res) => {
   try {
-    const store = await Store.findById(req.params.id);
+    const store = await Store.findById(req.params.id).populate(
+      "category",
+      "name"
+    );
     if (!store) {
-      return res.status(404).json({ error: "Store not found" }).populate(
-        "category",
-        "name"
-      );
+      return res.status(404).json({ error: "Store not found" });
     }
     res.json(store);
   } catch (error) {
     console.error("Error fetching store by ID:", error);
     res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const getStoreDetails = async (req, res) => {
+  try {
+      const store = await Store.findById(req.params.id);
+      if (!store) {
+          return res.status(404).json({ message: "Store not found" });
+      }
+      res.json(store);
+  } catch (error) {
+      res.status(500).json({ message: "Error fetching store details", error });
+  }
+};
+
+export const getNearbyStores = async (req, res) => {
+  try {
+      const { latitude, longitude, radius, shop } = req.query;
+
+      // Parse latitude, longitude, and radius
+      const lat = parseFloat(latitude);
+      const lng = parseFloat(longitude);
+      const rad = parseFloat(radius);
+
+      // Validate query parameters
+      if (isNaN(lat) || isNaN(lng) || isNaN(rad) || !shop) {
+          return res.status(400).json({ 
+              error: 'Invalid latitude, longitude, radius, or shop parameter' 
+          });
+      }
+
+      // Fetch stores using service function
+      const stores = await findStoresByLocation(lat, lng, rad, shop);
+
+      // Respond with store data
+      res.status(200).json({ stores });
+  } catch (error) {
+      console.error('Error fetching nearby stores:', error);
+      res.status(500).json({ 
+          message: 'Error fetching store details', 
+          error: error.message 
+      });
   }
 };

@@ -465,4 +465,146 @@ border-radius: 50%;
   background-color: #f9f9f9;
 }
 
-/* Scrollable card */
+/* Scrollable card/
+/* Marker card */
+.map-popup-box {
+  width: 250px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  font-family: Arial, sans-serif;
+  overflow: hidden;
+  text-align: center;
+}        
+.map-box-icon {
+  background-color: #e0e0e0;
+  padding: 20px;
+}
+.map-box-icon img {
+  width: 40px;
+  height: 40px;
+}
+.map-popup-box-content {
+  padding: 20px;
+text-align:left;
+}
+.map-popup-box-title {
+  font-size: 20px;
+  font-weight: bold;
+  margin: 10px 0;
+}       
+.map-popup-box-info {
+  color: #555;
+  margin-bottom: 10px;
+}        
+.map-popup-box-info-buttons {
+display: flex;    
+gap: 10px;
+padding: 0px 5px;
+}
+.map-popup-box-info-buttons button {
+  background-color: #007bff;
+  color: white;
+  padding: 10px 0;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  border-top: 1px solid #ddd;
+  outline: none;
+} 
+/* Marker Card */
+/* print card */
+/* Flexbox for alignment */
+
+.store-list-controls{
+  display: flex;
+  width:300px ;
+  
+}
+.direct{
+  flex-direction: row;
+  justify-content: space-around;
+}
+
+/* printcard */
+
+/* Zoomeffect */
+.custom-marker-icon .marker-pin {
+  width: 30px;
+  height: 42px;
+  background: #3498db;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50% 50% 50% 0;
+  border: 3px solid #fff;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
+
+.selected-store-popup {
+  border: 2px solid #2ecc71;
+  box-shadow: 0 0 15px rgba(46, 204, 113, 0.5);
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+/* Model */
+/* Modal styles */
+.route-modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0,0,0,0.4);
+}
+
+.route-modal-content {
+  background-color: white;
+  margin: 15% auto;
+  padding: 20px;
+  border-radius: 10px;
+  width: 80%;
+  max-width: 500px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.route-modal-content input {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+.route-modal-buttons {
+  display: flex;
+  justify-content: space-between;
+}
+
+.route-modal-buttons button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.route-modal-buttons .find-route {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.route-modal-buttons .cancel-route {
+  background-color: #f44336;
+  color: white;
+}
+/* Model */
