@@ -12,13 +12,14 @@ import {
   searchStoresByLocation,
   searchStoresByCategory,
   getAllStores,
-  togglePublishStore,getPublishedStores,getUnpublishedStores,getStoresByStatus,getStoreById,
+  togglePublishStore,getPublishedStores,getUnpublishedStores,getStoresByStatus,getStoreById,getGeocode
  
 } from '../controllers/StoreController.js';
 import { getWay } from '../controllers/routeController.js';
 const router = express.Router();
 
 
+router.get('/search', searchStoresByLocation);
 
 router.get('/coordinates', getCoordinates);
 router.get('/status', searchStoresByStatus);
@@ -37,6 +38,7 @@ router.put('/:id/publish',  togglePublishStore);
 router.get('/published', getPublishedStores);
 router.get('/unpublished', getUnpublishedStores);
 router.get('/status', getStoresByStatus);
+router.get('/geocode', getGeocode);
 
 
 export default router;

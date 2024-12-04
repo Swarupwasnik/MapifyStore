@@ -1,56 +1,519 @@
-
 document.addEventListener("DOMContentLoaded", function () {
   const mapContainer = document.getElementById("map");
 
   if (mapContainer._leaflet_id) {
     mapContainer._leaflet_id = null;
   }
-
-  const map = L.map("map").setView([23.0225, 72.5714], 5);
+  const originalPosition = [23.0225, 72.5714];
+  const originalZoom = 5;
+  // const map = L.map("map").setView([23.0225, 72.5714], 5);
+  const map = L.map("map").setView(originalPosition, originalZoom);
 
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution:
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   }).addTo(map);
 
-  let allStores = [];
-  let isFetching = false;
-
-  fetchCategories();
-  fetchStores();
-
   document
-    .getElementById("distanceSlider")
-    .addEventListener("input", function () {
-      const distance = this.value;
-      updateDistanceLabel(distance);
+    .getElementById("resetZoomButton")
+    .addEventListener("click", function () {
+      map.setView(originalPosition, originalZoom);
     });
 
-  function updateDistanceLabel(distance) {
-    const distanceLabel = document.getElementById("distanceLabel");
-    if (distanceLabel) {
-      distanceLabel.innerText = `${distance} km`;
-      fetchNearbyStores(19.076, 72.8777, distance);
-    }
+  let allStores = [];
+  let isFetching = false;
+  let locationMarkers = [];
+  let routingControl = null;
+  let currentStores = []; // To keep track of the current filtered store list
+
+  fetchCategories();
+  // fetchStores();
+  fetchStoresByStatus("open"); // Fetch only open stores on page load
+
+  // newly Added
+
+  function openDirectionModal(store) {
+    const directionModal = document.getElementById("directionModal");
+    const modalStoreDetails = document.getElementById("modalStoreDetails");
+    const startLocationInput = document.getElementById("startLocationInput");
+    const endLocationInput = document.getElementById("endLocationInput");
+    const getDirectionsBtn = document.getElementById("getDirectionsBtn");
+
+    // Enhanced Logging
+    console.log("Opening Direction Modal for Store:", store);
+
+    // Populate modal with store details
+    modalStoreDetails.innerHTML = `
+        <h3>Store Location</h3>
+        <p>${store.name}</p>
+        <p>${store.address.street}, ${store.address.city}, ${store.address.state}</p>
+    `;
+
+    // Set end location to store's address
+    endLocationInput.value = `${store.address.city}, ${store.address.state}`;
+
+    // Show the modal
+    directionModal.style.display = "block";
+
+    // Event listener for getting directions
+    getDirectionsBtn.onclick = async function () {
+      const startLocation = startLocationInput.value.trim();
+      const endLocation = endLocationInput.value.trim();
+
+      console.log("Direction Request:", {
+        startLocation,
+        endLocation,
+        storeAddress: `${store.address.street}, ${store.address.city}, ${store.address.state}`,
+      });
+
+      if (startLocation && endLocation) {
+        // Clear previous routing
+        if (routingControl) {
+          map.removeControl(routingControl);
+        }
+        locationMarkers = []; // Reset markers
+
+        try {
+          // Enhanced Geocoding with Detailed Logging
+          console.log("Geocoding Start Location...");
+          const startCoords = await geocodeAndAddMarker(startLocation);
+          console.log("Start Location Coordinates:", startCoords);
+
+          console.log("Geocoding End Location...");
+          const endCoords = await geocodeAndAddMarker(endLocation);
+          console.log("End Location Coordinates:", endCoords);
+
+          if (startCoords && endCoords) {
+            // Detailed Waypoints Request
+            console.log("Fetching Route Waypoints...");
+            const routeResponse = await fetch(
+              "http://localhost:5175/api/v1/stores/waypoints",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  locations: [
+                    `${startCoords.lat},${startCoords.long}`,
+                    `${endCoords.lat},${endCoords.long}`,
+                  ],
+                  shop: "quickstart-2770d800.myshopify.com",
+                }),
+              }
+            );
+
+            console.log("Route Response Status:", routeResponse.status);
+
+            if (!routeResponse.ok) {
+              const errorText = await routeResponse.text();
+              console.error("Route Fetch Error:", errorText);
+              throw new Error(errorText);
+            }
+
+            const routeData = await routeResponse.json();
+            console.log("Route Data:", routeData);
+
+            // Validate Waypoints
+            if (!routeData.waypoints || routeData.waypoints.length < 2) {
+              throw new Error("Insufficient waypoints for routing");
+            }
+
+            // Create waypoints for routing
+            const waypoints = routeData.waypoints.map((wp) =>
+              L.latLng(wp.latitude, wp.longitude)
+            );
+
+            console.log("Routing Waypoints:", waypoints);
+
+            // Create routing control with enhanced options
+            routingControl = L.Routing.control({
+              waypoints: waypoints,
+              routeWhitelist: ["car"],
+              lineOptions: {
+                styles: [{ color: "blue", opacity: 0.8, weight: 6 }],
+              },
+              addWaypoints: false,
+              draggableWaypoints: false,
+              fitSelectedRoutes: true,
+              show: true,
+              createMarker: function (i, waypoint, n) {
+                // Custom marker creation
+                const markerOptions =
+                  i === 0
+                    ? {
+                        icon: L.AwesomeMarkers.icon({
+                          icon: "play",
+                          markerColor: "green",
+                        }),
+                      }
+                    : i === n - 1
+                    ? {
+                        icon: L.AwesomeMarkers.icon({
+                          icon: "stop",
+                          markerColor: "red",
+                        }),
+                      }
+                    : {};
+
+                return L.marker(waypoint.latLng, markerOptions);
+              },
+            }).addTo(map);
+
+            // Close the modal
+            directionModal.style.display = "none";
+          } else {
+            console.warn("Unable to geocode start or end location");
+            alert("Could not find coordinates for the locations");
+          }
+        } catch (error) {
+          console.error("Route Calculation Error:", {
+            message: error.message,
+            stack: error.stack,
+          });
+          alert("Route calculation error: " + error.message);
+        }
+      } else {
+        alert("Please enter both start and end locations");
+      }
+    };
   }
 
-  function fetchNearbyStores(latitude, longitude, radius) {
-    fetch(
-      `http://localhost:5175/api/v1/stores/nearby?latitude=${latitude}&longitude=${longitude}&radius=${radius}&shop=quickstart-2770d800.myshopify.com`
-    )
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
-        return response.json();
-      })
-      .then((data) => {
-        console.log(`Fetched Nearby Stores within ${radius} km:`, data);
-        populateStoreList(data);
-        plotStoresOnMap(data);
-      })
-      .catch((error) => console.error("Error fetching nearby stores:", error));
+  // Enhanced Geocoding Function
+  async function geocodeAndAddMarker(locationInput) {
+    try {
+      console.log("Geocoding Location:", locationInput);
+
+      const res = await fetch(
+        `http://localhost:5175/api/v1/stores/geocode?shop=quickstart-2770d800.myshopify.com&${new URLSearchParams(
+          { location: locationInput }
+        )}`
+      );
+
+      console.log("Geocode Response Status:", res.status);
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("Geocode API Error:", errorText);
+        throw new Error(errorText);
+      }
+
+      const data = await res.json();
+      console.log("Geocode API Response:", data);
+
+      // Validate Coordinates
+      if (
+        !data.coordinates ||
+        !data.coordinates.latitude ||
+        !data.coordinates.longitude
+      ) {
+        throw new Error("Invalid coordinates received");
+      }
+
+      const newLocation = {
+        address: data.location || "Unknown Location",
+        lat: data.coordinates.latitude,
+        long: data.coordinates.longitude,
+      };
+
+      // Optional: Add marker to map
+      L.marker([newLocation.lat, newLocation.long])
+        .addTo(map)
+        .bindPopup(newLocation.address)
+        .openPopup();
+
+      locationMarkers.push(newLocation);
+
+      return newLocation;
+    } catch (error) {
+      console.error("Geocoding Error:", {
+        location: locationInput,
+        message: error.message,
+        stack: error.stack,
+      });
+      alert("Geocoding error: " + error.message);
+      return null;
+    }
   }
+  //  newlyUpdetae
+
+  // newSlider
+  function fetchNearbyStores(latitude, longitude, radius) {
+    // Get current filter values
+    const categorySelect = document.getElementById("category");
+    const statusSwitch = document.getElementById("statusSwitch");
+    const searchInput = document.getElementById("searchLocation");
+  
+    const selectedCategory = categorySelect ? categorySelect.value : "";
+    const openStatus = statusSwitch ? (statusSwitch.checked ? "open" : "closed") : "open";
+    const searchText = searchInput ? searchInput.value.trim().toLowerCase() : "";
+  
+    // Construct the fetch URL with all parameters
+    const url = new URL("http://localhost:5175/api/v1/stores/nearby");
+    url.searchParams.append("latitude", latitude);
+    url.searchParams.append("longitude", longitude);
+    url.searchParams.append("radius", radius);
+    url.searchParams.append("shop", "quickstart-2770d800.myshopify.com");
+  
+    // Add optional filters
+    if (selectedCategory) {
+        url.searchParams.append("category", selectedCategory);
+    }
+    url.searchParams.append("openStatus", openStatus);
+  
+    fetch(url.toString())
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error("Network response was not ok");
+            }
+            return response.json();
+        })
+        .then((data) => {
+            console.log("Raw data:", data);
+            let stores = [];
+  
+            // Extract stores from the response
+            if (Array.isArray(data)) {
+                stores = data;
+            } else if (data.stores && Array.isArray(data.stores)) {
+                stores = data.stores;
+            } else if (data.data && Array.isArray(data.data)) {
+                stores = data.data;
+            }
+  
+            // Additional client-side filtering
+            let filteredStores = stores.filter((store) => {
+                // Validate store address
+                if (!store.address || !store.address.latitude || !store.address.longitude) {
+                    return false;
+                }
+  
+                // Category filter
+                if (selectedCategory && 
+                    (!store.category || store.category.name !== selectedCategory)) {
+                    return false;
+                }
+  
+                // Search text filter
+                if (searchText) {
+                    const searchMatch = 
+                        (store.name && store.name.toLowerCase().includes(searchText)) ||
+                        (store.address.street && store.address.street.toLowerCase().includes(searchText)) ||
+                        (store.address.city && store.address.city.toLowerCase().includes(searchText)) ||
+                        (store.address.state && store.address.state.toLowerCase().includes(searchText));
+                    
+                    if (!searchMatch) return false;
+                }
+  
+                return true;
+            });
+  
+            // Update store list and map
+            updateStoreListAndMap(filteredStores);
+        })
+        .catch((error) => {
+            console.error("Error fetching nearby stores:", error);
+            updateStoreListAndMap([], "Error loading stores");
+        });
+  }
+  
+  function updateStoreListAndMap(stores, errorMessage = null) {
+    const storeList = document.getElementById("storeList");
+    const storeCountElement = document.getElementById("storeCount");
+    const categorySelect = document.getElementById("category");
+  
+    // Update store count
+    if (storeCountElement) {
+        storeCountElement.textContent = stores.length;
+    }
+  
+    // Handle empty or error state
+    if (stores.length === 0) {
+        if (storeList) {
+            storeList.innerHTML = errorMessage 
+                ? `<li>${errorMessage}</li>` 
+                : "<li>No stores found</li>";
+        }
+        plotStoresOnMap([]);
+        return;
+    }
+  
+    // Populate store list and map
+    populateStoreList(stores);
+    plotStoresOnMap(stores);
+  }
+  
+  // Modify distance slider event listener
+  document.getElementById("distanceSlider").addEventListener("input", function () {
+    const distance = this.value;
+    updateDistanceLabel(distance);
+  });
+  
+  function updateDistanceLabel(distance) {
+    const distanceLabel = document.getElementById("distanceLabel");
+    const categorySelect = document.getElementById("category");
+    const statusSwitch = document.getElementById("statusSwitch");
+  
+    if (distanceLabel) {
+        distanceLabel.innerText = `${distance} km`;
+  
+        // Get current filter values
+        const selectedCategory = categorySelect ? categorySelect.value : "";
+        const openStatus = statusSwitch ? (statusSwitch.checked ? "open" : "closed") : "open";
+  
+        // Use a default location or get user's current location
+        fetchNearbyStores(19.076, 72.8777, distance);
+    }
+  }
+  
+  // Update category change event listener
+  document.getElementById("category").addEventListener("change", function () {
+    const distanceSlider = document.getElementById("distanceSlider");
+    const currentDistance = distanceSlider ? distanceSlider.value : 20;
+    
+    // Re-fetch nearby stores with current distance and selected category
+    fetchNearbyStores(19.076, 72.8777, currentDistance);
+  });
+  
+  // Update status switch event listener
+  document.getElementById("statusSwitch").addEventListener("change", function () {
+    const distanceSlider = document.getElementById("distanceSlider");
+    const currentDistance = distanceSlider ? distanceSlider.value : 20;
+    
+    // Re-fetch nearby stores with current distance and status
+    fetchNearbyStores(19.076, 72.8777, currentDistance);
+  });
+  
+  // Add search input event listener
+  document.getElementById("searchLocation").addEventListener("input", function () {
+    const distanceSlider = document.getElementById("distanceSlider");
+    const currentDistance = distanceSlider ? distanceSlider.value : 20;
+  
+    // Fetch stores with current distance, category, and search input
+    fetchNearbyStores(19.076, 72.8777, currentDistance);
+  });
+  
+  // newSlider
+
+  // newlyUpdted
+
+  // document
+  //   .getElementById("distanceSlider")
+  //   .addEventListener("input", function () {
+  //     const distance = this.value;
+  //     updateDistanceLabel(distance);
+  //   });
+
+  //   function updateDistanceLabel(distance) {
+  //     const distanceLabel = document.getElementById("distanceLabel");
+  //     const distanceSlider = document.getElementById("distanceSlider");
+    
+  //     if (distanceLabel) {
+  //       const lowerBound = distance;
+  //       const upperBound = Math.min(Number(distance) + 10, 1000); // Ensure to convert to number
+  //       distanceLabel.innerText = `${lowerBound} km - ${upperBound} km`;
+    
+  //       if (Number(distance) === 1000) { // Compare as number
+  //         // Reset slider to 10 and update label
+  //         distanceSlider.value = 10;
+  //         distanceLabel.innerText = "10 km - 20 km";
+    
+  //         // Clear existing markers and reset map view
+  //         map.eachLayer((layer) => {
+  //           if (layer instanceof L.Marker) {
+  //             map.removeLayer(layer);
+  //           }
+  //         });
+  //         map.setView(originalPosition, originalZoom);
+    
+  //         // Fetch open status stores
+  //         fetchStoresByStatus("open");
+  //         plotStoresOnMap('stores');
+
+  //       } else {
+  //         // Fetch nearby stores within the selected distance
+  //         fetchNearbyStores(19.076, 72.8777, distance);
+  //       }
+  //     }
+  //   }
+    
+
+
+
+  // function fetchNearbyStores(latitude, longitude, radius) {
+  //   fetch(
+  //     `http://localhost:5175/api/v1/stores/nearby?latitude=${latitude}&longitude=${longitude}&radius=${radius}&shop=quickstart-2770d800.myshopify.com`
+  //   )
+  //     .then((response) => {
+  //       if (!response.ok) {
+  //         throw new Error("Network response was not ok");
+  //       }
+  //       return response.json();
+  //     })
+  //     .then((data) => {
+  //       // Extensive logging to understand the data structure
+  //       console.log("Raw data:", data);
+  //       console.log("Data type:", typeof data);
+  //       console.log("Data keys:", Object.keys(data));
+
+  //       // More robust data extraction
+  //       let stores = [];
+
+  //       // Try multiple ways to extract stores
+  //       if (Array.isArray(data)) {
+  //         stores = data;
+  //       } else if (data.stores && Array.isArray(data.stores)) {
+  //         stores = data.stores;
+  //       } else if (data.data && Array.isArray(data.data)) {
+  //         stores = data.data;
+  //       } else if (data.results && Array.isArray(data.results)) {
+  //         stores = data.results;
+  //       } else {
+  //         console.warn("No stores found in the response");
+  //         // Clear existing store list
+  //         const storeList = document.getElementById("storeList");
+  //         if (storeList) {
+  //           storeList.innerHTML = "<li>No stores found</li>";
+  //         }
+  //         return;
+  //       }
+
+  //       console.log("Processed stores:", stores);
+  //       console.log("Number of stores:", stores.length);
+
+  //       if (stores.length === 0) {
+  //         console.warn("No stores found in the nearby search");
+  //         const storeList = document.getElementById("storeList");
+  //         if (storeList) {
+  //           storeList.innerHTML = "<li>No stores found</li>";
+  //         }
+  //         return;
+  //       }
+
+  //       // Ensure stores have required properties
+  //       const validStores = stores.filter(
+  //         (store) =>
+  //           store.address && store.address.latitude && store.address.longitude
+  //       );
+  //       const storeCountElement = document.getElementById("storeCount");
+  //       storeCountElement.textContent = validStores.length;
+  //       console.log("Valid stores:", validStores);
+
+  //       populateStoreList(validStores);
+  //       plotStoresOnMap(validStores);
+  //     })
+  //     .catch((error) => {
+  //       console.error("Error fetching nearby stores:", error);
+
+  //       // Clear existing store list
+  //       document.getElementById("storeCount").textContent = "0";
+
+  //       const storeList = document.getElementById("storeList");
+  //       if (storeList) {
+  //         storeList.innerHTML = "<li>Error loading stores</li>";
+  //       }
+  //     });
+  // }
 
   function populateStoreList(data) {
     const storeList = document.querySelector("#storeList");
@@ -62,7 +525,17 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     storeList.innerHTML = "";
+    if (data.length === 0) {
+      storeCountElement.textContent = "0"; // Show 0 when no stores found
+      storeList.innerHTML = "<li>No stores found matching your search</li>";
+      return;
+    }
     storeCountElement.textContent = data.length;
+    // storeCountElement.textContent = data.length || 0;
+    // if (data.length === 0) {
+    //   storeList.innerHTML = "<li>No stores found matching your search</li>";
+    //   return;
+    // }
 
     const today = new Date().getDay();
 
@@ -200,6 +673,24 @@ document.addEventListener("DOMContentLoaded", function () {
 
       storeList.appendChild(storeCard);
     });
+
+    // newlyadded
+
+    const directionButtons = document.querySelectorAll(
+      ".st-list-button-active"
+    );
+    directionButtons.forEach((button, index) => {
+      button.addEventListener("click", () => {
+        const store = data[index];
+        openDirectionModal(store);
+      });
+    });
+
+    document.querySelector(".close-button").addEventListener("click", () => {
+      document.getElementById("directionModal").style.display = "none";
+    });
+
+    // newlyadded
   }
 
   function getDayName(dayNumber) {
@@ -468,6 +959,8 @@ document.addEventListener("DOMContentLoaded", function () {
         console.error("Error fetching stores by category:", error)
       );
   }
+  // newly added
+  // Global variable to keep track of the current store lis // This will store the most recent list of stores
 
   function applyFilters() {
     const searchInput = document.getElementById("searchLocation");
@@ -478,32 +971,250 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
-    const searchText = searchInput.value.toLowerCase();
+    const searchText = searchInput.value.trim().toLowerCase(); // Convert to lowercase
     const selectedCategory = categorySelect.value;
 
-    let filteredStores = allStores;
+    // If search text is empty and no category is selected, show all stores
+    if (!searchText && !selectedCategory) {
+      currentStores = allStores; // Update current stores
+      populateStoreList(allStores);
+      plotStoresOnMap(allStores);
+      return;
+    }
 
+    // If category is selected, handle category filtering first
     if (selectedCategory) {
-      fetchStoresByCategory(selectedCategory);
-    } else {
-      filteredStores = allStores.filter((store) => {
-        return (
-          store.name.toLowerCase().includes(searchText) ||
-          store.address.street.toLowerCase().includes(searchText) ||
-          store.address.city.toLowerCase().includes(searchText) ||
-          store.address.state.toLowerCase().includes(searchText)
-        );
-      });
+      fetchStoresByCategory(selectedCategory, searchText);
+      return;
+    }
 
-      populateStoreList(filteredStores);
-      plotStoresOnMap(filteredStores);
+    // If no category is selected, perform global search
+    if (searchText) {
+      performGlobalSearch(searchText);
     }
   }
 
-  const searchInput = document.getElementById("searchLocation");
-  if (searchInput) {
-    searchInput.addEventListener("input", applyFilters);
+  function fetchStoresByCategory(category, searchText = "") {
+    // Show loading indicator
+    const storeList = document.getElementById("storeList");
+    const storeCountElement = document.getElementById("storeCount");
+
+    if (storeList) {
+      storeList.innerHTML = "<li>Searching stores...</li>";
+    }
+
+    fetch(
+      `http://localhost:5175/api/v1/stores/category?category=${encodeURIComponent(
+        category
+      )}&shop=quickstart-2770d800.myshopify.com`
+    )
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        // Robust data extraction
+        let stores = [];
+        if (Array.isArray(data)) {
+          stores = data;
+        } else if (data.stores && Array.isArray(data.stores)) {
+          stores = data.stores;
+        } else if (data.data && Array.isArray(data.data)) {
+          stores = data.data;
+        } else {
+          console.warn("No stores found for the category");
+          if (storeList) {
+            storeList.innerHTML = "<li>No stores found in this category</li>";
+          }
+          plotStoresOnMap([]); // Clear map
+          return;
+        }
+
+        // Validate stores
+        let filteredStores = stores.filter(
+          (store) =>
+            store.address && store.address.latitude && store.address.longitude
+        );
+
+        // Apply additional search text filter if provided
+        if (searchText) {
+          const searchTextLower = searchText.toLowerCase();
+          filteredStores = filteredStores.filter((store) => {
+            return (
+              (store.name &&
+                store.name.toLowerCase().includes(searchTextLower)) ||
+              (store.address.street &&
+                store.address.street.toLowerCase().includes(searchTextLower)) ||
+              (store.address.city &&
+                store.address.city.toLowerCase().includes(searchTextLower)) ||
+              (store.address.state &&
+                store.address.state.toLowerCase().includes(searchTextLower))
+            );
+          });
+        }
+
+        // Update current stores
+        currentStores = filteredStores;
+
+        if (filteredStores.length === 0) {
+          if (storeList) {
+            storeList.innerHTML =
+              "<li>No stores found matching the search</li>";
+          }
+          storeCountElement.textContent = "0";
+          plotStoresOnMap([]);
+          return;
+          // plotStoresOnMap([]); // Clear map
+          // return;
+        }
+
+        // Update stores and map
+        populateStoreList(filteredStores);
+        plotStoresOnMap(filteredStores);
+      })
+      .catch((error) => {
+        console.error("Error fetching stores by category:", error);
+
+        // Show error message
+        if (storeList) {
+          storeList.innerHTML = "<li>Error searching stores</li>";
+        }
+        plotStoresOnMap([]); // Clear map
+      });
   }
+
+  function performGlobalSearch(searchText) {
+    // Show loading indicator
+    const storeList = document.getElementById("storeList");
+    // new
+    const storeCountElement = document.getElementById("storeCount");
+
+    // new
+    if (storeList) {
+      storeList.innerHTML = "<li>Searching stores...</li>";
+    }
+
+    // Perform in-memory search across all stores
+    const searchTextLower = searchText.toLowerCase();
+
+    const filteredStores = allStores.filter((store) => {
+      // Check if store object has the necessary properties
+      if (!store || !store.address) return false;
+
+      // Multiple search criteria
+      const matchesName =
+        store.name && store.name.toLowerCase().includes(searchTextLower);
+
+      const matchesStreet =
+        store.address.street &&
+        store.address.street.toLowerCase().includes(searchTextLower);
+
+      const matchesCity =
+        store.address.city &&
+        store.address.city.toLowerCase().includes(searchTextLower);
+
+      const matchesState =
+        store.address.state &&
+        store.address.state.toLowerCase().includes(searchTextLower);
+
+      return matchesName || matchesStreet || matchesCity || matchesState;
+    });
+
+    // Update current stores
+    currentStores = filteredStores;
+
+    if (filteredStores.length === 0) {
+      if (storeList) {
+        storeList.innerHTML = "<li>No stores found matching your search</li>";
+      }
+      // newlyadded
+      document.getElementById("storeCount").textContent = "0";
+      plotStoresOnMap([]);
+      return;
+      // newlyadded
+      // Clear map
+      // plotStoresOnMap([]);
+      // return;
+    }
+
+    // Update stores and map
+    populateStoreList(filteredStores);
+    plotStoresOnMap(filteredStores);
+  }
+
+  function fetchAllStores() {
+    // Show loading indicator
+    const storeList = document.getElementById("storeList");
+    if (storeList) {
+      storeList.innerHTML = "<li>Loading stores...</li>";
+    }
+
+    // Fetch all stores when the page loads
+    fetch(
+      `http://localhost:5175/api/v1/stores?shop=quickstart-2770d800.myshopify.com`
+    )
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        // Robust data extraction
+        let stores = [];
+        if (Array.isArray(data)) {
+          stores = data;
+        } else if (data.stores && Array.isArray(data.stores)) {
+          stores = data.stores;
+        } else if (data.data && Array.isArray(data.data)) {
+          stores = data.data;
+        }
+
+        // Validate stores
+        allStores = stores.filter(
+          (store) =>
+            store.address && store.address.latitude && store.address.longitude
+        );
+
+        // Update current stores
+        currentStores = allStores;
+
+        // Populate stores list and map
+        if (storeList) {
+          storeList.innerHTML = ""; // Clear loading message
+        }
+        populateStoreList(allStores);
+        plotStoresOnMap(allStores);
+      })
+      .catch((error) => {
+        console.error("Error fetching all stores:", error);
+
+        // Show error message
+        if (storeList) {
+          storeList.innerHTML = "<li>Error loading stores</li>";
+        }
+      });
+  }
+
+  // Event listeners
+  document
+    .getElementById("searchLocation")
+    .addEventListener("input", function () {
+      // Debounce the search to prevent too many API calls
+      clearTimeout(this.searchTimeout);
+      this.searchTimeout = setTimeout(() => {
+        applyFilters();
+      }, 500); // 500ms delay
+    });
+
+  document.getElementById("category").addEventListener("change", function () {
+    applyFilters();
+  });
+
+  // Fetch all stores when the page loads
+  document.addEventListener("DOMContentLoaded", fetchAllStores);
 
   fetchStoresByStatus("open");
 

@@ -43,10 +43,10 @@
           <div class="slider-container distnace-flex">
             <div>
               <label>Distance Range</label>
-              <input id="distanceSlider" type="range" min="100" max="3000"  value="10" oninput="updateDistanceLabel(this.value)">
+              <input id="distanceSlider" type="range" min="10" max="1000"  value="20" oninput="updateDistanceLabel(this.value)">
             </div>
             <div>
-              <span  id="distanceLabel">10km - 80km</span>
+              <span  id="distanceLabel">10km - 30km</span>
             </div>
           </div>
           <div class="store-list-container">
@@ -69,17 +69,24 @@
               <div id="storeListContainer"></div>
 
             </div>
+            
           </div>
         </div>
   
 
           <div class="store-list-controls">
+        
   <h3 class="direct">
+  
     Total Stores: <span id="storeCount">0</span>
+    
+    
     <button id="printButton" class="print-button">
       🖨️
       Print Store List
     </button>
+         <button id="resetZoomButton" class="reset-button">🔄 Reset Map</button>
+
   </h3>
 </div>
 
@@ -93,8 +100,34 @@
           </div>
 
           <div class="store-list-placeholder" id="map" style="height: 400px;"></div>
+          <!-- Add this in your modal or route details section -->
 
-  
+  {%comment%}
+Newly added
+{%endcomment%}
+
+<div id="directionModal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <div id="modalStoreDetails"></div>
+        
+        <div class="direction-inputs">
+            <label>Start Location:</label>
+            <input type="text" id="startLocationInput" placeholder="Enter start address">
+            
+            <label>End Location:</label>
+            <input type="text" id="endLocationInput" placeholder="Enter destination address">
+            
+            <button id="getDirectionsBtn">Get Directions</button>
+        </div>
+        
+        <div id="directionResults"></div>
+    </div>
+</div>
+
+{%comment%} newlyAdded {%endcomment%}
+
+
         </div>
       </div>
     </div>
@@ -109,3 +142,10 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+<script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>

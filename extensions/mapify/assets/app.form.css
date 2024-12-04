@@ -556,8 +556,7 @@ padding: 0px 5px;
 }
 /* Model */
 /* Modal styles */
-.route-modal {
-  display: none;
+.modal {
   position: fixed;
   z-index: 1000;
   left: 0;
@@ -568,43 +567,30 @@ padding: 0px 5px;
   background-color: rgba(0,0,0,0.4);
 }
 
-.route-modal-content {
-  background-color: white;
+.modal-content {
+  background-color: #fefefe;
   margin: 15% auto;
   padding: 20px;
-  border-radius: 10px;
+  border: 1px solid #888;
   width: 80%;
   max-width: 500px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
-.route-modal-content input {
-  width: 100%;
-  margin-bottom: 10px;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-}
-
-.route-modal-buttons {
-  display: flex;
-  justify-content: space-between;
-}
-
-.route-modal-buttons button {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 5px;
+.close-button {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
   cursor: pointer;
 }
 
-.route-modal-buttons .find-route {
-  background-color: #4CAF50;
-  color: white;
+/* newly added code */
+.start-marker div, .end-marker div {
+  transition: transform 0.2s ease-in-out;
 }
 
-.route-modal-buttons .cancel-route {
-  background-color: #f44336;
-  color: white;
+.start-marker div:hover, .end-marker div:hover {
+  transform: scale(1.2);
 }
+/* newly added code */
 /* Model */

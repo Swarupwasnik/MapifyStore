@@ -1,5 +1,3 @@
-
-
 import { SuperfaceClient } from "@superfaceai/one-sdk";
 import Category from "../models/CategoryModel.js";
 import Store from "../models/StoreModel.js";
@@ -56,20 +54,80 @@ export const getStoresWithCoordinates = async (req, res) => {
 
 export const getWaypoints = async (req, res) => {
   try {
-    const locations = req.body.locations;
+    const { locations, shop } = req.body;
+
+    // Validate Input
     if (!Array.isArray(locations) || locations.length !== 2) {
-      return res.status(422).json({ error: "Expected 2 waypoints" });
+      return res.status(400).json({
+        error: 'Invalid locations',
+        details: 'Provide an array of exactly 2 locations'
+      });
     }
 
+    // Geocode Locations
     const waypoints = await Promise.all(
-      locations.map((location) => geocodeLocation(location))
+      locations.map(location => geocodeLocation(location, shop))
     );
-    res.json({ waypoints });
+
+    // Validate Waypoints
+    const validWaypoints = waypoints.filter(wp => 
+      wp.latitude && wp.longitude
+    );
+
+    if (validWaypoints.length < 2) {
+      return res.status(404).json({
+        error: 'Insufficient geocoding results',
+        details: 'Could not find coordinates for provided locations'
+      });
+    }
+
+    res.status(200).json({
+      waypoints: validWaypoints,
+      metadata: {
+        timestamp: new Date().toISOString(),
+        source: 'Nominatim'
+      }
+    });
   } catch (error) {
-    console.error("Error retrieving waypoints:", error);
-    res
-      .status(500)
-      .json({ error: "Error retrieving waypoints", details: error.message });
+    console.error('Waypoints Error:', error);
+    res.status(500).json({
+      error: 'Waypoints Calculation Failed',
+      details: error.message
+    });
+  }
+};
+
+
+// export const getWaypoints = async (req, res) => {
+//   try {
+//     const locations = req.body.locations;
+//     if (!Array.isArray(locations) || locations.length !== 2) {
+//       return res.status(422).json({ error: "Expected 2 waypoints" });
+//     }
+
+//     const waypoints = await Promise.all(
+//       locations.map((location) => geocodeLocation(location))
+//     );
+//     res.json({ waypoints });
+//   } catch (error) {
+//     console.error("Error retrieving waypoints:", error);
+//     res
+//       .status(500)
+//       .json({ error: "Error retrieving waypoints", details: error.message });
+//   }
+// };
+
+export const getGeocode = async (req, res) => {
+  try {
+    const location = req.query.location;
+    if (!location) {
+      return res.status(400).json({ error: "Location is required" });
+    }
+    const coordinates = await geocodeLocation(location);
+    res.json({ location, coordinates });
+  } catch (error) {
+    console.error("Error in geocode controller:", error);
+    res.status(500).json({ message: "Error fetching geocode data", error });
   }
 };
 
@@ -136,7 +194,7 @@ export const addStore = async (req, res) => {
       },
       location: {
         type: "Point",
-        coordinates: [coordinates.longitude, coordinates.latitude] // GeoJSON format
+        coordinates: [coordinates.longitude, coordinates.latitude], // GeoJSON format
       },
       workingHours,
       agreeToTerms,
@@ -155,8 +213,6 @@ export const addStore = async (req, res) => {
       .json({ error: "Error adding store", details: error.message });
   }
 };
-
-
 
 export const updateStore = async (req, res) => {
   try {
@@ -230,17 +286,6 @@ export const updateStore = async (req, res) => {
   }
 };
 
-
-
-
-
-
-
-
-
-
-
-
 export const deleteStore = async (req, res) => {
   try {
     const { storeId } = req.params;
@@ -295,7 +340,7 @@ export const searchStoresByLocation = async (req, res) => {
     const stores = await Store.find({
       "address.latitude": coordinates.latitude,
       "address.longitude": coordinates.longitude,
-    });
+    }).populate("category", "name");
     res.json(stores);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -433,10 +478,10 @@ export const getStoreById = async (req, res) => {
   try {
     const store = await Store.findById(req.params.id);
     if (!store) {
-      return res.status(404).json({ error: "Store not found" }).populate(
-        "category",
-        "name"
-      );
+      return res
+        .status(404)
+        .json({ error: "Store not found" })
+        .populate("category", "name");
     }
     res.json(store);
   } catch (error) {
