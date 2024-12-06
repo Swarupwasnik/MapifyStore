@@ -12,7 +12,7 @@ import {
   searchStoresByLocation,
   searchStoresByCategory,
   getAllStores,
-  togglePublishStore,getPublishedStores,getUnpublishedStores,getStoresByStatus,getStoreById,getGeocode
+  togglePublishStore,getPublishedStores,getUnpublishedStores,getStoresByStatus,getStoreById,getGeocode,fetchStoresByCategoryAndDistance,getStoresByCategoryAndStatus
  
 } from '../controllers/StoreController.js';
 import { getWay } from '../controllers/routeController.js';
@@ -39,6 +39,9 @@ router.get('/published', getPublishedStores);
 router.get('/unpublished', getUnpublishedStores);
 router.get('/status', getStoresByStatus);
 router.get('/geocode', getGeocode);
+router.get("/category-distance", fetchStoresByCategoryAndDistance)
+router.get('/category-status', getStoresByCategoryAndStatus);
+
 
 
 export default router;

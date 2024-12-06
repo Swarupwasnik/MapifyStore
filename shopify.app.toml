@@ -3,7 +3,7 @@
 client_id = "b99d9e7797e3cc43d591fd60c41b90e3"
 name = "new one"
 handle = "new-one-10"
-application_url = "https://arranged-what-remarks-keep.trycloudflare.com"
+application_url = "https://chan-pam-constitutes-waters.trycloudflare.com"
 embedded = true
 
 [build]
@@ -496,7 +496,37 @@ redirect_urls = [
   "https://lightbox-girls-consistent-refused.trycloudflare.com/api/auth/callback",
   "https://arranged-what-remarks-keep.trycloudflare.com/auth/callback",
   "https://arranged-what-remarks-keep.trycloudflare.com/auth/shopify/callback",
-  "https://arranged-what-remarks-keep.trycloudflare.com/api/auth/callback"
+  "https://arranged-what-remarks-keep.trycloudflare.com/api/auth/callback",
+  "https://census-confusion-still-specialties.trycloudflare.com/auth/callback",
+  "https://census-confusion-still-specialties.trycloudflare.com/auth/shopify/callback",
+  "https://census-confusion-still-specialties.trycloudflare.com/api/auth/callback",
+  "https://detailed-revolutionary-quarters-doctor.trycloudflare.com/auth/callback",
+  "https://detailed-revolutionary-quarters-doctor.trycloudflare.com/auth/shopify/callback",
+  "https://detailed-revolutionary-quarters-doctor.trycloudflare.com/api/auth/callback",
+  "https://chinese-keeps-tour-puerto.trycloudflare.com/auth/callback",
+  "https://chinese-keeps-tour-puerto.trycloudflare.com/auth/shopify/callback",
+  "https://chinese-keeps-tour-puerto.trycloudflare.com/api/auth/callback",
+  "https://slope-daughter-bullet-finnish.trycloudflare.com/auth/callback",
+  "https://slope-daughter-bullet-finnish.trycloudflare.com/auth/shopify/callback",
+  "https://slope-daughter-bullet-finnish.trycloudflare.com/api/auth/callback",
+  "https://republic-lenses-hugh-const.trycloudflare.com/auth/callback",
+  "https://republic-lenses-hugh-const.trycloudflare.com/auth/shopify/callback",
+  "https://republic-lenses-hugh-const.trycloudflare.com/api/auth/callback",
+  "https://incredible-identify-distances-knowledgestorm.trycloudflare.com/auth/callback",
+  "https://incredible-identify-distances-knowledgestorm.trycloudflare.com/auth/shopify/callback",
+  "https://incredible-identify-distances-knowledgestorm.trycloudflare.com/api/auth/callback",
+  "https://justin-contained-within-liz.trycloudflare.com/auth/callback",
+  "https://justin-contained-within-liz.trycloudflare.com/auth/shopify/callback",
+  "https://justin-contained-within-liz.trycloudflare.com/api/auth/callback",
+  "https://stylus-committees-registration-requires.trycloudflare.com/auth/callback",
+  "https://stylus-committees-registration-requires.trycloudflare.com/auth/shopify/callback",
+  "https://stylus-committees-registration-requires.trycloudflare.com/api/auth/callback",
+  "https://upcoming-insured-avon-percent.trycloudflare.com/auth/callback",
+  "https://upcoming-insured-avon-percent.trycloudflare.com/auth/shopify/callback",
+  "https://upcoming-insured-avon-percent.trycloudflare.com/api/auth/callback",
+  "https://chan-pam-constitutes-waters.trycloudflare.com/auth/callback",
+  "https://chan-pam-constitutes-waters.trycloudflare.com/auth/shopify/callback",
+  "https://chan-pam-constitutes-waters.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]

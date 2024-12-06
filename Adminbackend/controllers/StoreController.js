@@ -489,3 +489,139 @@ export const getStoreById = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+export const fetchStoresByCategoryAndDistance = async (req, res) => {
+  try {
+    const { categoryId, latitude, longitude, distance } = req.query;
+
+    // Validate inputs
+    if (!categoryId || !latitude || !longitude || !distance) {
+      return res.status(400).json({ error: "All query parameters are required" });
+    }
+
+    const radiusInMeters = Number(distance) * 1000; // Convert km to meters
+
+    // Query stores
+    const stores = await Store.find({
+      category: categoryId,
+      "address.latitude": { $exists: true },
+      "address.longitude": { $exists: true },
+      location: {
+        $near: {
+          $geometry: {
+            type: "Point",
+            coordinates: [Number(longitude), Number(latitude)],
+          },
+          $maxDistance: radiusInMeters,
+        },
+      },
+    }).populate("category"); // Populate category details
+
+    if (!stores || stores.length === 0) {
+      return res.status(404).json({ message: "No stores found" });
+    }
+
+    res.status(200).json({ stores });
+  } catch (error) {
+    console.error("Error fetching stores by category and distance:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+export const getStoresByCategoryAndStatus = async (req, res) => {
+  const { shop, categoryName, openStatus } = req.query;
+
+  // Ensure categoryName is provided in the request
+  if (!categoryName) {
+    return res.status(400).json({ error: 'Category name is required' });
+  }
+
+  try {
+    // Find the category ID based on the provided category name
+    const category = await Category.findOne({ name: categoryName });
+    if (!category) {
+      return res.status(404).json({ error: 'Category not found' });
+    }
+
+    // Construct the query to find stores in the selected category and the specified shop (if provided)
+    const query = {
+      shop: shop,  // Optional, if 'shop' is specified
+      category: category._id,  // Find stores by category ID
+      published: true,  // Ensure the store is published
+    };
+
+    console.log('Constructed Query:', query);
+
+    // Fetch stores based on the query
+    let stores = await Store.find(query).populate('category', 'name');
+
+    console.log('Fetched Stores:', stores);
+
+    if (!stores.length) {
+      console.warn('No stores found for the given criteria.');
+      return res.status(404).json({ error: 'No stores found' });
+    }
+
+    // Filter stores by open/close status if provided
+    if (openStatus) {
+      const isOpen = openStatus === 'open';
+      console.log(`Filtering stores for openStatus=${openStatus}, isOpen=${isOpen}`);
+      
+      // Filter stores based on the `isStoreOpen()` method
+      stores = stores.filter((store) => store.isStoreOpen() === isOpen);
+
+      console.log('Stores after filtering by openStatus:', stores);
+    }
+
+    // Return the filtered stores as a JSON response
+    res.json(stores);
+  } catch (error) {
+    console.error('Error fetching stores:', error);
+    res.status(500).json({ error: 'Error fetching stores', details: error.message });
+  }
+};
+
+
+
+
+// export const getStoresByCategoryAndStatus = async (req, res) => {
+//   const { shop, category, openStatus } = req.query;
+
+//   if (!mongoose.Types.ObjectId.isValid(category)) {
+//     return res.status(400).json({ error: "Invalid category ID" });
+//   }
+
+//   try {
+//     const query = {
+//       shop: shop,
+//       category: new mongoose.Types.ObjectId(category),
+//       published: true,
+//     };
+
+//     console.log("Constructed Query:", query);
+
+//     let stores = await Store.find(query).populate("category", "name");
+
+//     console.log("Fetched Stores:", stores);
+
+//     if (!stores.length) {
+//       console.warn("No stores found for the given criteria.");
+//       return res.status(404).json({ error: "No stores found" });
+//     }
+
+//     if (openStatus) {
+//       const isOpen = openStatus === "open";
+//       console.log(`Filtering stores for openStatus=${openStatus}, isOpen=${isOpen}`);
+
+//       stores = stores.filter(store => store.isStoreOpen() === isOpen);
+
+//       console.log("Stores after filtering by openStatus:", stores);
+//     }
+
+//     res.json(stores);
+//   } catch (error) {
+//     console.error("Error fetching stores:", error);
+//     res.status(500).json({ error: "Error fetching stores", details: error.message });
+//   }
+// };
+

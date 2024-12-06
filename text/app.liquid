@@ -3,7 +3,7 @@
   "name": "App Registration",
   "target": "section",
   "class": "app-dashboard-form",
-  "stylesheet": "app-form.css",
+  "stylesheet": "app.form.css",
   "javascript": "app-form.js",
   "settings": [
     {
@@ -43,10 +43,10 @@
           <div class="slider-container distnace-flex">
             <div>
               <label>Distance Range</label>
-              <input id="distanceSlider" type="range" min="20" max="1000"  value="20" oninput="updateDistanceLabel(this.value)">
+              <input id="distanceSlider" type="range" min="0" max="1000"  value="20" oninput="updateDistanceLabel(this.value)">
             </div>
             <div>
-              <span  id="distanceLabel">20km - 30km</span>
+              <span  id="distanceLabel">10km - 30km</span>
             </div>
           </div>
           <div class="store-list-container">

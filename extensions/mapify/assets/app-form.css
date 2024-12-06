@@ -303,8 +303,8 @@ button.cancel {
   margin-right: 5px;
 }  
 .store-list-placeholder {
-  width: 50%;
-  height: 400px;
+  width: 60%;
+  height: 500px;
   background-color: #f0f0f0;
   display: flex;
   align-items: center;
@@ -468,7 +468,7 @@ border-radius: 50%;
 /* Scrollable card/
 /* Marker card */
 .map-popup-box {
-  width: 250px;
+  width: 200px;
   background-color: #f9f9f9;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);

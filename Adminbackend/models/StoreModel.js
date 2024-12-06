@@ -75,27 +75,65 @@ StoreSchema.methods.isStoreOpen = function () {
 
   const today = new Date();
   const dayName = today.toLocaleString("en-US", { weekday: "long" });
+
   const todayHours = this.workingHours.find(
-    (day) =>
-      day &&
-      typeof day.day === "string" &&
-      day.day.toLowerCase() === dayName.toLowerCase()
+    (day) => day?.day?.toLowerCase() === dayName.toLowerCase()
   );
 
   if (!todayHours || !todayHours.isOpen) {
     return false;
   }
 
-  const customTime = todayHours.customTimes.find(
-    (custom) =>
-      custom.date && custom.date.toDateString() === today.toDateString()
+  const customTime = todayHours.customTimes?.find(
+    (custom) => custom.date?.toDateString() === today.toDateString()
   );
-  const openTime = customTime ? customTime.start : todayHours.start;
-  const closeTime = customTime ? customTime.end : todayHours.end;
+
+  const openTime = customTime?.start || todayHours.start;
+  const closeTime = customTime?.end || todayHours.end;
+
+  if (!openTime || !closeTime) {
+    return false; // Invalid data
+  }
 
   const currentTime = today.toTimeString().slice(0, 5);
   return currentTime >= openTime && currentTime <= closeTime;
 };
+
+
+
+
+// StoreSchema.methods.isStoreOpen = function () {
+//   if (!this.workingHours || !Array.isArray(this.workingHours)) {
+//     return false;
+//   }
+
+//   const today = new Date();
+//   const dayName = today.toLocaleString("en-US", { weekday: "long" });
+//   const todayHours = this.workingHours.find(
+//     (day) =>
+//       day &&
+//       typeof day.day === "string" &&
+//       day.day.toLowerCase() === dayName.toLowerCase()
+//   );
+
+//   if (!todayHours || !todayHours.isOpen) {
+//     return false;
+//   }
+
+//   const customTime = todayHours.customTimes.find(
+//     (custom) =>
+//       custom.date && custom.date.toDateString() === today.toDateString()
+//   );
+//   const openTime = customTime ? customTime.start : todayHours.start;
+//   const closeTime = customTime ? customTime.end : todayHours.end;
+//   // newly Added
+  
+ 
+// // newlyAdded
+//   const currentTime = today.toTimeString().slice(0, 5);
+//   return currentTime >= openTime && currentTime <= closeTime;
+ 
+// };
 
 const Store = mongoose.models.Store || mongoose.model("Store", StoreSchema);
 export default Store;

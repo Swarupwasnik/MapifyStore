@@ -25,8 +25,7 @@ document.addEventListener("DOMContentLoaded", function () {
   let locationMarkers = [];
   let routingControl = null;
   let currentStores = [];
-  let previousOpenStores = [];
-  let previousClosedStores = [];
+  let previousOpenStores = []; 
 
   fetchCategories();
   // fetchStores();
@@ -245,10 +244,7 @@ document.addEventListener("DOMContentLoaded", function () {
       updateDistanceLabel(distance);
     });
 
-  // newDistanelabel
-
-  // newDistanceLabel
-
+  // updatenew
   function updateDistanceLabel(distance) {
     const distanceLabel = document.getElementById("distanceLabel");
     const distanceSlider = document.getElementById("distanceSlider");
@@ -555,14 +551,27 @@ document.addEventListener("DOMContentLoaded", function () {
       console.log("Switch toggled, status:", openStatus);
 
       // added
-      // resetFields();
+      resetFields();
       // added
       fetchStoresByStatus(openStatus);
     });
-  // Added new
- 
+  //  openNewAd
+  function resetFields() {
+    // Reset category dropdown to default option
+    const categorySelect = document.getElementById("category");
+    categorySelect.selectedIndex = 0; // Reset to "Select category" option
 
-  // Added New
+    // Reset the distance range slider to default value (e.g., 20)
+    const distanceSlider = document.getElementById("distanceSlider");
+    distanceSlider.value = 20; // Set to default value (you can adjust this if needed)
+
+    // Reset the distance label text
+    const distanceLabel = document.getElementById("distanceLabel");
+    distanceLabel.textContent = "10km - 30km";
+
+    const searchInput = document.getElementById("searchLocation");
+    searchInput.value = ""; // Clear the search input
+  }
 
   function fetchStoresByStatus(openStatus) {
     if (isFetching) return;
@@ -736,7 +745,6 @@ document.addEventListener("DOMContentLoaded", function () {
       .catch((error) => console.error("Error fetching categories:", error));
   }
 
-  //CategoryStatusCode
   function populateCategories(data) {
     const categorySelect = document.getElementById("category");
     if (!categorySelect) {
@@ -754,86 +762,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
     categorySelect.addEventListener("change", () => {
       const selectedCategory = categorySelect.value;
-      const statusSwitch = document.getElementById("statusSwitch");
-      const openStatus = statusSwitch.checked ? "open" : "close";
-
-      console.log(
-        `Selected Category: ${selectedCategory}, Status: ${openStatus}`
-      );
-
+      console.log(`Selected Category Name: ${selectedCategory}`);
       if (selectedCategory) {
-        // If a category is selected, fetch stores by category and status
-        fetchStoresByCategoryAndStatus(selectedCategory, openStatus);
+        fetchStoresByCategory(selectedCategory);
       } else {
-        // If no category is selected, fetch all open stores
-        fetchStoresByStatus("open");
+        applyFilters();
       }
     });
   }
-  function fetchStoresByCategoryAndStatus(categoryName, openStatus) {
-    console.log(
-      `Fetching stores for category: ${categoryName}, Status: ${openStatus}`
-    );
-
-    fetch(
-      `http://localhost:5175/api/v1/stores/category-status?categoryName=${categoryName}&openStatus=${openStatus}`
-    )
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
-        return response.json();
-      })
-      .then((data) => {
-        console.log(
-          `Fetched Stores for Category ${categoryName} with Status ${openStatus}:`,
-          data
-        );
-
-        if (data.length === 0) {
-          const storeList = document.querySelector("#storeList");
-          const storeCountElement = document.querySelector("#storeCount");
-
-          storeList.innerHTML = "<li>No stores found matching the search</li>";
-          storeCountElement.textContent = "0";
-          plotStoresOnMap([]);
-        } else {
-          populateStoreList(data);
-          plotStoresOnMap(data);
-        }
-      })
-      .catch((error) => {
-        console.error("Error fetching stores by category and status:", error);
-
-        const storeList = document.querySelector("#storeList");
-        const storeCountElement = document.querySelector("#storeCount");
-
-        storeList.innerHTML = "<li>Error loading stores</li>";
-        storeCountElement.textContent = "0";
-        plotStoresOnMap([]);
-      });
-  }
-
-  document
-    .getElementById("statusSwitch")
-    .addEventListener("change", function () {
-      const openStatus = this.checked ? "open" : "close";
-      const statusLabel = document.getElementById("statusLabel");
-      statusLabel.textContent =
-        openStatus.charAt(0).toUpperCase() + openStatus.slice(1);
-
-      const categorySelect = document.getElementById("category");
-      const selectedCategory = categorySelect.value;
-
-      if (selectedCategory) {
-        // If a category is selected, fetch stores by category and status
-        fetchStoresByCategoryAndStatus(selectedCategory, openStatus);
-      } else {
-        // If no category is selected, fetch stores by status
-        fetchStoresByStatus(openStatus);
-      }
-    });
-  // categoryStatusCode
 
   function fetchStores() {
     fetch(
@@ -1010,10 +946,6 @@ document.addEventListener("DOMContentLoaded", function () {
       });
   }
 
-  // update performGlobalSearch
-
-  // update performGlobalSearch
-
   function performGlobalSearch(searchText) {
     // Show loading indicator
     const storeList = document.getElementById("storeList");
@@ -1130,41 +1062,18 @@ document.addEventListener("DOMContentLoaded", function () {
   // Event listeners
   document
     .getElementById("searchLocation")
-    // added One
     .addEventListener("input", function () {
       // Debounce the search to prevent too many API calls
       clearTimeout(this.searchTimeout);
       this.searchTimeout = setTimeout(() => {
-        const searchText = this.value.trim();
-
-        if (searchText === "") {
-          // If search is cleared, revert to the current category and status
-          const categorySelect = document.getElementById("category");
-          const statusSwitch = document.getElementById("statusSwitch");
-
-          const selectedCategory = categorySelect.value;
-          const openStatus = statusSwitch.checked ? "open" : "close";
-
-          if (selectedCategory) {
-            // If a category is selected, fetch stores by category and status
-            fetchStoresByCategoryAndStatus(selectedCategory, openStatus);
-          } else {
-            // If no category is selected, fetch stores by status
-            fetchStoresByStatus(openStatus);
-          }
-        } else {
-          // Perform search with current filters
-          applyFilters();
-        }
+        applyFilters();
       }, 500); // 500ms delay
     });
 
   document.getElementById("category").addEventListener("change", function () {
     applyFilters();
   });
-  // NewlyAdded
 
-  // Newlyadded
   // Fetch all stores when the page loads
   document.addEventListener("DOMContentLoaded", fetchAllStores);
 

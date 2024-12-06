@@ -343,3 +343,108 @@ document.getElementById("searchLocation").addEventListener("input", function () 
   // Fetch stores with current distance, category, and search input
   fetchNearbyStores(19.076, 72.8777, currentDistance);
 });
+
+
+
+
+let previousOpenStores = []; // Variable to store the open stores fetched previously
+
+function updateDistanceLabel(distance) {
+  const distanceLabel = document.getElementById("distanceLabel");
+  const distanceSlider = document.getElementById("distanceSlider");
+
+  if (distanceLabel) {
+    const lowerBound = distance;
+    const upperBound = Math.min(Number(distance) + 10, 1000); // Ensure to convert to number
+    distanceLabel.innerText = `${lowerBound} km - ${upperBound} km`;
+
+    if (Number(distance) === 1000) {
+      // If the slider is at 1000 km, just update the label, no reset needed
+      distanceSlider.value = 1000;  // Ensure the slider is at the 1000 km position
+      distanceLabel.innerText = "1000 km"; // Adjust the label if necessary
+
+      // If open stores are not fetched yet, fetch them
+      if (previousOpenStores.length === 0) {
+        fetchStoresByStatus("open").then((openStores) => {
+          previousOpenStores = openStores; // Store the open status stores for later use
+          plotStoresOnMap(openStores); // Plot the stores on the map
+        });
+      } else {
+        // If stores have already been fetched, reuse the stored open stores
+        plotStoresOnMap(previousOpenStores);
+      }
+
+    } else {
+      // For other ranges, fetch nearby stores based on the selected distance
+      fetchNearbyStores(19.076, 72.8777, distance);
+    }
+  }
+}
+
+// Function to fetch the open status stores (can be modified as needed)
+function fetchStoresByStatus(status) {
+  return fetch(`http://localhost:5175/api/v1/stores?status=${status}&shop=quickstart-2770d800.myshopify.com`)
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      return response.json();
+    })
+    .then((data) => {
+      let stores = [];
+      if (data.stores && Array.isArray(data.stores)) {
+        stores = data.stores;
+      } else if (data.data && Array.isArray(data.data)) {
+        stores = data.data;
+      }
+      return stores;
+    })
+    .catch((error) => {
+      console.error("Error fetching open stores:", error);
+      return [];
+    });
+}
+
+// Function to plot stores on the map
+function plotStoresOnMap(stores) {
+  // Clear existing markers (if needed)
+  map.eachLayer((layer) => {
+    if (layer instanceof L.Marker) {
+      map.removeLayer(layer);
+    }
+  });
+
+  stores.forEach((store) => {
+    if (store.address && store.address.latitude && store.address.longitude) {
+      const lat = store.address.latitude;
+      const lng = store.address.longitude;
+      const marker = L.marker([lat, lng]).addTo(map);
+
+      // Optional: Add a popup with store info
+      marker.bindPopup(`<b>${store.name}</b><br>${store.address.street}`);
+    }
+  });
+}
+
+// Function to fetch nearby stores based on the new distance
+function fetchNearbyStores(latitude, longitude, radius) {
+  fetch(`http://localhost:5175/api/v1/stores/nearby?latitude=${latitude}&longitude=${longitude}&radius=${radius}&shop=quickstart-2770d800.myshopify.com`)
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      return response.json();
+    })
+    .then((data) => {
+      let stores = [];
+      if (data.stores && Array.isArray(data.stores)) {
+        stores = data.stores;
+      } else if (data.data && Array.isArray(data.data)) {
+        stores = data.data;
+      }
+      plotStoresOnMap(stores);
+    })
+    .catch((error) => {
+      console.error("Error fetching nearby stores:", error);
+    });
+}
