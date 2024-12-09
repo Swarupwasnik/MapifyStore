@@ -3,7 +3,7 @@
 client_id = "b99d9e7797e3cc43d591fd60c41b90e3"
 name = "new one"
 handle = "new-one-10"
-application_url = "https://marble-entities-employ-screw.trycloudflare.com"
+application_url = "https://unavailable-interpreted-increasing-flashing.trycloudflare.com"
 embedded = true
 
 [build]
@@ -562,7 +562,13 @@ redirect_urls = [
   "https://setting-labels-express-fabric.trycloudflare.com/api/auth/callback",
   "https://marble-entities-employ-screw.trycloudflare.com/auth/callback",
   "https://marble-entities-employ-screw.trycloudflare.com/auth/shopify/callback",
-  "https://marble-entities-employ-screw.trycloudflare.com/api/auth/callback"
+  "https://marble-entities-employ-screw.trycloudflare.com/api/auth/callback",
+  "https://realtor-ambient-slovak-license.trycloudflare.com/auth/callback",
+  "https://realtor-ambient-slovak-license.trycloudflare.com/auth/shopify/callback",
+  "https://realtor-ambient-slovak-license.trycloudflare.com/api/auth/callback",
+  "https://unavailable-interpreted-increasing-flashing.trycloudflare.com/auth/callback",
+  "https://unavailable-interpreted-increasing-flashing.trycloudflare.com/auth/shopify/callback",
+  "https://unavailable-interpreted-increasing-flashing.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
