@@ -3,6 +3,7 @@ import Category from "../models/CategoryModel.js";
 import Store from "../models/StoreModel.js";
 import moment from "moment";
 import { retry } from "../services/retryService.js";
+import { calculateDistance } from "../utils/distanceUtils.js";
 import mongoose from "mongoose";
 
 const sdk = new SuperfaceClient();
@@ -584,44 +585,250 @@ export const getStoresByCategoryAndStatus = async (req, res) => {
 
 
 
-// export const getStoresByCategoryAndStatus = async (req, res) => {
-//   const { shop, category, openStatus } = req.query;
+export const getStoresByDistanceAndStatus = async (req, res) => {
+  const { latitude, longitude, distance = 1000 } = req.query;
 
-//   if (!mongoose.Types.ObjectId.isValid(category)) {
-//     return res.status(400).json({ error: "Invalid category ID" });
-//   }
+  if (!latitude || !longitude) {
+    return res.status(400).json({ message: "Latitude and Longitude are required." });
+  }
 
+  try {
+    const maxDistance = parseFloat(distance) * 1000; // Convert km to meters
+
+    // Fetch stores within the distance range
+    const stores = await Store.find({
+      location: {
+        $near: {
+          $geometry: { type: "Point", coordinates: [parseFloat(longitude), parseFloat(latitude)] },
+          $maxDistance: maxDistance,
+        },
+      },
+    });
+
+    // Categorize stores into open and closed
+    const openStores = [];
+    const closedStores = [];
+
+    stores.forEach((store) => {
+      if (store.isStoreOpen()) {
+        openStores.push(store);
+      } else {
+        closedStores.push(store);
+      }
+    });
+
+    res.status(200).json({
+      openStores,
+      closedStores,
+    });
+  } catch (error) {
+    console.error("Error fetching stores:", error);
+    res.status(500).json({ message: "Failed to fetch stores.", error });
+  }
+};
+
+
+
+// Filter stores based on query parameters
+
+export const getFilteredStores = async (req, res) => {
+    try {
+        const { latitude, longitude, radius, category, status } = req.query;
+
+        // Find category by name if category is provided
+        let categoryId = null;
+        if (category) {
+            const foundCategory = await Category.findOne({ name: category });
+            if (foundCategory) {
+                categoryId = foundCategory._id;
+            } else {
+                return res.status(404).json({ error: "Category not found" });
+            }
+        }
+
+        const query = {
+            "location.coordinates": {
+                $geoWithin: {
+                    $centerSphere: [[longitude, latitude], radius / 6378.1],
+                },
+            },
+            category: categoryId, // Match by category ID
+            published: true,
+        };
+
+        if (status === "open" || status === "closed") {
+            query["workingHours"] = { $exists: true };
+        }
+
+        const stores = await Store.find(query).populate("category", "name");
+        const filteredStores = stores.filter((store) => {
+            const isOpen = store.isStoreOpen();
+            return status === "open" ? isOpen : !isOpen;
+        });
+
+        res.json(filteredStores);
+    } catch (error) {
+        console.error("Error fetching stores by filters:", error);
+        res.status(500).json({ error: "Failed to fetch stores" });
+    }
+};
+
+
+// export const getFilteredStores = async (req, res) => {
 //   try {
-//     const query = {
-//       shop: shop,
-//       category: new mongoose.Types.ObjectId(category),
-//       published: true,
-//     };
+//       const { latitude, longitude, radius, category, status } = req.query;
+//       const query = {
+//           "location.coordinates": {
+//               $geoWithin: {
+//                   $centerSphere: [[longitude, latitude], radius / 6378.1],
+//               },
+//           },
+//           category: category,
+//           published: true,
+//       };
 
-//     console.log("Constructed Query:", query);
+//       if (status === "open" || status === "closed") {
+//           query["workingHours"] = { $exists: true };
+//       }
 
-//     let stores = await Store.find(query).populate("category", "name");
+//       const stores = await Store.find(query).populate("category", "name");
+//       const filteredStores = stores.filter((store) => {
+//           const isOpen = store.isStoreOpen();
+//           return status === "open" ? isOpen : !isOpen;
+//       });
 
-//     console.log("Fetched Stores:", stores);
-
-//     if (!stores.length) {
-//       console.warn("No stores found for the given criteria.");
-//       return res.status(404).json({ error: "No stores found" });
-//     }
-
-//     if (openStatus) {
-//       const isOpen = openStatus === "open";
-//       console.log(`Filtering stores for openStatus=${openStatus}, isOpen=${isOpen}`);
-
-//       stores = stores.filter(store => store.isStoreOpen() === isOpen);
-
-//       console.log("Stores after filtering by openStatus:", stores);
-//     }
-
-//     res.json(stores);
+//       res.json(filteredStores);
 //   } catch (error) {
-//     console.error("Error fetching stores:", error);
-//     res.status(500).json({ error: "Error fetching stores", details: error.message });
+//       console.error("Error fetching stores by filters:", error);
+//       res.status(500).json({ error: "Failed to fetch stores" });
 //   }
 // };
+
+
+// export const getFilteredStores = async (req, res) => {
+//   try {
+//     const {
+//       category,
+//       status,
+//       distance = 1000, // Default distance to 1000 km if not provided
+//       shop,
+//       page = 1,
+//       limit = 20,
+//     } = req.query;
+
+//     // Default location coordinates for Nagpur
+//     const defaultLatitude = 21.1458; // Latitude for Nagpur
+//     const defaultLongitude = 79.0882; // Longitude for Nagpur
+
+//     let query = {};  // No default shop filter
+
+//     // Check if the shop parameter is passed and add it to the query only if it exists
+//     if (shop) {
+//       query.shop = shop;
+//     }
+
+//     // Category filtering by name or ObjectId
+//     if (category && category !== '') {
+//       if (mongoose.Types.ObjectId.isValid(category)) {
+//         query.category = new mongoose.Types.ObjectId(category);
+//       } else {
+//         const categoryDoc = await Category.findOne({ name: category }).lean();
+//         if (categoryDoc) {
+//           query.category = categoryDoc._id;
+//         } else {
+//           return res.status(400).json({ message: 'Invalid category name' });
+//         }
+//       }
+//     }
+
+//     // Status filtering
+//     if (status === 'open') {
+//       const currentDay = new Date().toLocaleString('en-us', { weekday: 'long' });
+//       const currentTime = new Date().toTimeString().slice(0, 5);
+
+//       query.$or = [
+//         {
+//           workingHours: {
+//             $elemMatch: {
+//               day: currentDay,
+//               isOpen: true,
+//               start: { $lte: currentTime },
+//               end: { $gte: currentTime },
+//             },
+//           },
+//         },
+//         { isOpen: true }, // Fallback for stores marked as open
+//       ];
+//     } else if (status === 'close') {
+//       query.isOpen = false; // Filter stores that are closed
+//     }
+
+//     // Distance-based filtering using $geoWithin and $centerSphere
+//     query.location = {
+//       $geoWithin: {
+//         $centerSphere: [
+//           [defaultLongitude, defaultLatitude],
+//           parseFloat(distance) / 6378.1, // Convert distance to radians
+//         ],
+//       },
+//     };
+
+//     // Pagination setup
+//     const pageNumber = parseInt(page);
+//     const pageLimit = parseInt(limit);
+//     const skip = (pageNumber - 1) * pageLimit;
+
+//     console.log("Final query:", JSON.stringify(query, null, 2)); // Debugging log
+
+//     // Query stores based on filters
+//     const stores = await Store.find(query)
+//       .skip(skip)
+//       .limit(pageLimit)
+//       .populate('category', 'name') // Populate category name in result
+//       .select('-__v') // Exclude version key
+//       .lean();
+
+//     console.log("Stores found:", stores.length); // Debugging log
+
+//     // Count total matching documents
+//     const totalStores = await Store.countDocuments(query);
+
+//     // Respond with filtered stores and pagination info
+//     if (stores.length > 0) {
+//       res.json({
+//         stores,
+//         pagination: {
+//           currentPage: pageNumber,
+//           totalPages: Math.ceil(totalStores / pageLimit),
+//           totalStores,
+//           pageSize: pageLimit,
+//         },
+//       });
+//     } else {
+//       res.json({
+//         message: `No stores found matching the criteria. ${
+//           status === 'open'
+//             ? 'No open stores found at this location.'
+//             : 'No stores found at this location.'
+//         }`,
+//         stores: [],
+//         totalStores: 0,
+//         pagination: {
+//           currentPage: pageNumber,
+//           totalPages: 0,
+//           pageSize: pageLimit,
+//         },
+//       });
+//     }
+//   } catch (error) {
+//     console.error('Store filtering error:', error);
+//     res.status(500).json({
+//       message: 'Error filtering stores',
+//       error: error.message,
+//     });
+//   }
+// };
+
+
+
 

@@ -100,6 +100,8 @@ StoreSchema.methods.isStoreOpen = function () {
 };
 
 
+const Store = mongoose.models.Store || mongoose.model("Store", StoreSchema);
+export default Store;
 
 
 // StoreSchema.methods.isStoreOpen = function () {
@@ -135,5 +137,5 @@ StoreSchema.methods.isStoreOpen = function () {
  
 // };
 
-const Store = mongoose.models.Store || mongoose.model("Store", StoreSchema);
-export default Store;
+// const Store = mongoose.models.Store || mongoose.model("Store", StoreSchema);
+// export default Store;

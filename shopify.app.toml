@@ -3,7 +3,7 @@
 client_id = "b99d9e7797e3cc43d591fd60c41b90e3"
 name = "new one"
 handle = "new-one-10"
-application_url = "https://chan-pam-constitutes-waters.trycloudflare.com"
+application_url = "https://marble-entities-employ-screw.trycloudflare.com"
 embedded = true
 
 [build]
@@ -526,7 +526,43 @@ redirect_urls = [
   "https://upcoming-insured-avon-percent.trycloudflare.com/api/auth/callback",
   "https://chan-pam-constitutes-waters.trycloudflare.com/auth/callback",
   "https://chan-pam-constitutes-waters.trycloudflare.com/auth/shopify/callback",
-  "https://chan-pam-constitutes-waters.trycloudflare.com/api/auth/callback"
+  "https://chan-pam-constitutes-waters.trycloudflare.com/api/auth/callback",
+  "https://airplane-confidentiality-coordination-abilities.trycloudflare.com/auth/callback",
+  "https://airplane-confidentiality-coordination-abilities.trycloudflare.com/auth/shopify/callback",
+  "https://airplane-confidentiality-coordination-abilities.trycloudflare.com/api/auth/callback",
+  "https://emotions-istanbul-westminster-genre.trycloudflare.com/auth/callback",
+  "https://emotions-istanbul-westminster-genre.trycloudflare.com/auth/shopify/callback",
+  "https://emotions-istanbul-westminster-genre.trycloudflare.com/api/auth/callback",
+  "https://technology-brought-x-distribute.trycloudflare.com/auth/callback",
+  "https://technology-brought-x-distribute.trycloudflare.com/auth/shopify/callback",
+  "https://technology-brought-x-distribute.trycloudflare.com/api/auth/callback",
+  "https://seat-artists-explicitly-newbie.trycloudflare.com/auth/callback",
+  "https://seat-artists-explicitly-newbie.trycloudflare.com/auth/shopify/callback",
+  "https://seat-artists-explicitly-newbie.trycloudflare.com/api/auth/callback",
+  "https://planes-achieve-rights-dip.trycloudflare.com/auth/callback",
+  "https://planes-achieve-rights-dip.trycloudflare.com/auth/shopify/callback",
+  "https://planes-achieve-rights-dip.trycloudflare.com/api/auth/callback",
+  "https://mathematical-starting-benchmark-thumbzilla.trycloudflare.com/auth/callback",
+  "https://mathematical-starting-benchmark-thumbzilla.trycloudflare.com/auth/shopify/callback",
+  "https://mathematical-starting-benchmark-thumbzilla.trycloudflare.com/api/auth/callback",
+  "https://correctly-join-flowers-partial.trycloudflare.com/auth/callback",
+  "https://correctly-join-flowers-partial.trycloudflare.com/auth/shopify/callback",
+  "https://correctly-join-flowers-partial.trycloudflare.com/api/auth/callback",
+  "https://tennis-more-dana-nominations.trycloudflare.com/auth/callback",
+  "https://tennis-more-dana-nominations.trycloudflare.com/auth/shopify/callback",
+  "https://tennis-more-dana-nominations.trycloudflare.com/api/auth/callback",
+  "https://arbitration-conducting-buried-chess.trycloudflare.com/auth/callback",
+  "https://arbitration-conducting-buried-chess.trycloudflare.com/auth/shopify/callback",
+  "https://arbitration-conducting-buried-chess.trycloudflare.com/api/auth/callback",
+  "https://hr-removal-rachel-investigators.trycloudflare.com/auth/callback",
+  "https://hr-removal-rachel-investigators.trycloudflare.com/auth/shopify/callback",
+  "https://hr-removal-rachel-investigators.trycloudflare.com/api/auth/callback",
+  "https://setting-labels-express-fabric.trycloudflare.com/auth/callback",
+  "https://setting-labels-express-fabric.trycloudflare.com/auth/shopify/callback",
+  "https://setting-labels-express-fabric.trycloudflare.com/api/auth/callback",
+  "https://marble-entities-employ-screw.trycloudflare.com/auth/callback",
+  "https://marble-entities-employ-screw.trycloudflare.com/auth/shopify/callback",
+  "https://marble-entities-employ-screw.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
