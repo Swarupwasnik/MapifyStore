@@ -1,5 +1,4 @@
 
-
 import { join } from "path";
 import { readFileSync } from "fs";
 import express from "express";
@@ -18,6 +17,7 @@ import categoryRoutes from "./routes/categoryRoutes.js";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import locationRoutes from "./routes/locationRoutes.js"
 import SettingRoutes from "./routes/SettingRoutes.js";
+import initializeDefaultSettings from "./seed/initializeDefaultSettings.js";
 
 dotenv.config();
 console.log("Environment variables loaded:", process.env);
@@ -63,6 +63,10 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(morgan("dev"));
+// newly added
+
+
+// newlyadded
 
 // Proxy middleware
 app.use('/apps/stores', createProxyMiddleware({

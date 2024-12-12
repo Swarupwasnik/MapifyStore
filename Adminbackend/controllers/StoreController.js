@@ -544,11 +544,10 @@ export const getStoresByCategoryAndStatus = async (req, res) => {
       return res.status(404).json({ error: 'Category not found' });
     }
 
-    // Construct the query to find stores in the selected category and the specified shop (if provided)
     const query = {
-      shop: shop,  // Optional, if 'shop' is specified
-      category: category._id,  // Find stores by category ID
-      published: true,  // Ensure the store is published
+      shop: shop,  
+      category: category._id,  
+      published: true,  
     };
 
     console.log('Constructed Query:', query);
@@ -605,7 +604,6 @@ export const getStoresByDistanceAndStatus = async (req, res) => {
       },
     });
 
-    // Categorize stores into open and closed
     const openStores = [];
     const closedStores = [];
 
@@ -626,64 +624,29 @@ export const getStoresByDistanceAndStatus = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch stores.", error });
   }
 };
-
-
-
-// Filter stores based on query parameters
-
-export const getFilteredStores = async (req, res) => {
-    try {
-        const { latitude, longitude, radius, category, status } = req.query;
-
-        // Find category by name if category is provided
-        let categoryId = null;
-        if (category) {
-            const foundCategory = await Category.findOne({ name: category });
-            if (foundCategory) {
-                categoryId = foundCategory._id;
-            } else {
-                return res.status(404).json({ error: "Category not found" });
-            }
-        }
-
-        const query = {
-            "location.coordinates": {
-                $geoWithin: {
-                    $centerSphere: [[longitude, latitude], radius / 6378.1],
-                },
-            },
-            category: categoryId, // Match by category ID
-            published: true,
-        };
-
-        if (status === "open" || status === "closed") {
-            query["workingHours"] = { $exists: true };
-        }
-
-        const stores = await Store.find(query).populate("category", "name");
-        const filteredStores = stores.filter((store) => {
-            const isOpen = store.isStoreOpen();
-            return status === "open" ? isOpen : !isOpen;
-        });
-
-        res.json(filteredStores);
-    } catch (error) {
-        console.error("Error fetching stores by filters:", error);
-        res.status(500).json({ error: "Failed to fetch stores" });
-    }
-};
-
-
+// newcode
 // export const getFilteredStores = async (req, res) => {
 //   try {
 //       const { latitude, longitude, radius, category, status } = req.query;
+
+//       // Find category by name if category is provided
+//       let categoryId = null;
+//       if (category) {
+//           const foundCategory = await Category.findOne({ name: category });
+//           if (foundCategory) {
+//               categoryId = foundCategory._id;
+//           } else {
+//               return res.status(404).json({ error: "Category not found" });
+//           }
+//       }
+
 //       const query = {
 //           "location.coordinates": {
 //               $geoWithin: {
 //                   $centerSphere: [[longitude, latitude], radius / 6378.1],
 //               },
 //           },
-//           category: category,
+//           category: categoryId, // Match by category ID
 //           published: true,
 //       };
 
@@ -703,132 +666,232 @@ export const getFilteredStores = async (req, res) => {
 //       res.status(500).json({ error: "Failed to fetch stores" });
 //   }
 // };
+export const getFilteredStores = async (req, res) => {
+  try {
+    const { latitude, longitude, radius, category, status } = req.query;
+
+    // Validate latitude and longitude
+    if (!latitude || !longitude) {
+      return res.status(400).json({ error: "Latitude and longitude are required" });
+    }
+
+    // Convert latitude and longitude to numbers
+    const lat = parseFloat(latitude);
+    const lng = parseFloat(longitude);
+
+    if (isNaN(lat) || isNaN(lng)) {
+      return res.status(400).json({ error: "Invalid latitude or longitude" });
+    }
+
+    // Find category by name if provided
+    let categoryId = null;
+    if (category) {
+      const foundCategory = await Category.findOne({ name: category });
+      if (foundCategory) {
+        categoryId = foundCategory._id;
+      } else {
+        return res.status(404).json({ error: "Category not found" });
+      }
+    }
+
+    // Base query for geospatial filtering
+    const query = {
+      "location.coordinates": {
+        $geoWithin: {
+          $centerSphere: [[lng, lat], radius / 6378.1],
+        },
+      },
+      published: true,
+    };
+
+    // Add category filter if applicable
+    if (categoryId) {
+      query.category = categoryId;
+    }
+
+    // Fetch stores within the distance and category
+    const stores = await Store.find(query).populate("category", "name");
+
+    // Get current day and time
+    const today = new Date();
+    const dayName = today.toLocaleString("en-US", { weekday: "long" });
+    const currentTime = today.toTimeString().slice(0, 5);
+
+    // Filter stores based on status
+    const filteredStores = stores.filter((store) => {
+      const workingHours = store.workingHours || [];
+      const todayHours = workingHours.find((hours) => hours.day === dayName);
+
+      if (!todayHours || !todayHours.isOpen) {
+        // If no working hours for today or the store is closed all day
+        return status === "closed";
+      }
+
+      // Check if the store is currently open
+      const isOpen = currentTime >= todayHours.start && currentTime <= todayHours.end;
+
+      return status === "open" ? isOpen : !isOpen;
+    });
+
+    // Respond with the filtered stores
+    res.json(filteredStores);
+  } catch (error) {
+    console.error("Error fetching stores by filters:", error);
+    res.status(500).json({ error: "Failed to fetch stores" });
+  }
+};
+
+// newcode
+
+// Filter stores based on query parameters
 
 
-// export const getFilteredStores = async (req, res) => {
+export const getStoresByFilters = async (req, res) => {
+  const { location, category, status } = req.query;
+
+  try {
+    // Find the category by name
+    const categoryData = await Category.findOne({ name: category });
+    if (!categoryData) {
+      return res.status(404).json({ error: "Category not found" });
+    }
+
+    const categoryId = categoryData._id; // Get the ObjectId of the category
+
+    // Split the location into parts (city, state, country)
+    const locationParts = location.split(",").map(part => part.trim());
+    const city = locationParts[0] || "";
+    const state = locationParts[1] || "";
+    const country = locationParts[2] || "";
+
+    // Build the query
+    const query = {
+      published: true, // Ensure the store is published
+      category: categoryId // Use the ObjectId for the category
+    };
+
+    if (city) {
+      query["address.city"] = { $regex: city, $options: "i" }; // Match city
+    }
+    if (state) {
+      query["address.state"] = { $regex: state, $options: "i" }; // Match state
+    }
+    if (country) {
+      query["address.country"] = { $regex: country, $options: "i" }; // Match country
+    }
+
+    const stores = await Store.find(query).populate("category");
+
+    // Filter by status if needed
+    const filteredStores = stores.filter(store => {
+      return status === "open" ? store.isStoreOpen() : !store.isStoreOpen();
+    });
+
+    res.status(200).json(filteredStores);
+  } catch (error) {
+    console.error("Error fetching stores:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+;
+
+
+
+// export const getStoresByFilters = async (req, res) => {
 //   try {
-//     const {
-//       category,
-//       status,
-//       distance = 1000, // Default distance to 1000 km if not provided
-//       shop,
-//       page = 1,
-//       limit = 20,
-//     } = req.query;
+//     const { location, category, status } = req.query;
 
-//     // Default location coordinates for Nagpur
-//     const defaultLatitude = 21.1458; // Latitude for Nagpur
-//     const defaultLongitude = 79.0882; // Longitude for Nagpur
-
-//     let query = {};  // No default shop filter
-
-//     // Check if the shop parameter is passed and add it to the query only if it exists
-//     if (shop) {
-//       query.shop = shop;
+//     // Validate required query parameters
+//     if (!location || !status) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Location and status query parameters are required",
+//       });
 //     }
 
-//     // Category filtering by name or ObjectId
-//     if (category && category !== '') {
-//       if (mongoose.Types.ObjectId.isValid(category)) {
-//         query.category = new mongoose.Types.ObjectId(category);
-//       } else {
-//         const categoryDoc = await Category.findOne({ name: category }).lean();
-//         if (categoryDoc) {
-//           query.category = categoryDoc._id;
-//         } else {
-//           return res.status(400).json({ message: 'Invalid category name' });
-//         }
-//       }
-//     }
-
-//     // Status filtering
-//     if (status === 'open') {
-//       const currentDay = new Date().toLocaleString('en-us', { weekday: 'long' });
-//       const currentTime = new Date().toTimeString().slice(0, 5);
-
-//       query.$or = [
-//         {
-//           workingHours: {
-//             $elemMatch: {
-//               day: currentDay,
-//               isOpen: true,
-//               start: { $lte: currentTime },
-//               end: { $gte: currentTime },
-//             },
-//           },
+//     // Fetch stores with categories joined
+//     let stores = await Store.aggregate([
+//       {
+//         $lookup: {
+//           from: "categories", // The actual name of your categories collection
+//           localField: "category",
+//           foreignField: "_id",
+//           as: "categoryDetails",
 //         },
-//         { isOpen: true }, // Fallback for stores marked as open
-//       ];
-//     } else if (status === 'close') {
-//       query.isOpen = false; // Filter stores that are closed
-//     }
-
-//     // Distance-based filtering using $geoWithin and $centerSphere
-//     query.location = {
-//       $geoWithin: {
-//         $centerSphere: [
-//           [defaultLongitude, defaultLatitude],
-//           parseFloat(distance) / 6378.1, // Convert distance to radians
-//         ],
 //       },
-//     };
-
-//     // Pagination setup
-//     const pageNumber = parseInt(page);
-//     const pageLimit = parseInt(limit);
-//     const skip = (pageNumber - 1) * pageLimit;
-
-//     console.log("Final query:", JSON.stringify(query, null, 2)); // Debugging log
-
-//     // Query stores based on filters
-//     const stores = await Store.find(query)
-//       .skip(skip)
-//       .limit(pageLimit)
-//       .populate('category', 'name') // Populate category name in result
-//       .select('-__v') // Exclude version key
-//       .lean();
-
-//     console.log("Stores found:", stores.length); // Debugging log
-
-//     // Count total matching documents
-//     const totalStores = await Store.countDocuments(query);
-
-//     // Respond with filtered stores and pagination info
-//     if (stores.length > 0) {
-//       res.json({
-//         stores,
-//         pagination: {
-//           currentPage: pageNumber,
-//           totalPages: Math.ceil(totalStores / pageLimit),
-//           totalStores,
-//           pageSize: pageLimit,
+//       {
+//         $project: {
+//           company: 1,
+//           name: 1,
+//           email: 1,
+//           phone: 1,
+//           address: 1,
+//           categoryDetails: { $arrayElemAt: ["$categoryDetails", 0] },
+//           workingHours: 1,
 //         },
-//       });
-//     } else {
-//       res.json({
-//         message: `No stores found matching the criteria. ${
-//           status === 'open'
-//             ? 'No open stores found at this location.'
-//             : 'No stores found at this location.'
-//         }`,
+//       },
+//     ]);
+
+//     // Filter stores based on location
+//     stores = stores.filter(store => {
+//       const locationMatch =
+//         store.address.city?.toLowerCase().includes(location.toLowerCase()) ||
+//         store.address.state?.toLowerCase().includes(location.toLowerCase()) ||
+//         store.address.street?.toLowerCase().includes(location.toLowerCase());
+//       return locationMatch;
+//     });
+
+//     // Optional filtering by category
+//     if (category) {
+//       stores = stores.filter(store =>
+//         store.categoryDetails?.name?.toLowerCase() === category.toLowerCase()
+//       );
+//     }
+
+//     // Filter stores based on their open/closed status
+//     const today = new Date();
+//     const todayName = today.toLocaleString("en-US", { weekday: "long" });
+//     const currentTime = today.toTimeString().slice(0, 5);
+
+//     stores = stores.filter(store => {
+//       const workingHours = store.workingHours || [];
+//       const todayHours = workingHours.find(
+//         day => day.day.toLowerCase() === todayName.toLowerCase()
+//       );
+
+//       // If the store is closed today
+//       if (!todayHours || !todayHours.isOpen) {
+//         return status === "closed";
+//       }
+
+//       // Compare current time with store's opening and closing times
+//       const isOpen =
+//         currentTime >= todayHours.start && currentTime <= todayHours.end;
+//       return status === "open" ? isOpen : !isOpen;
+//     });
+
+//     // Respond with the filtered stores
+//     if (!stores.length) {
+//       return res.status(200).json({
+//         success: true,
+//         message: "No stores found",
 //         stores: [],
-//         totalStores: 0,
-//         pagination: {
-//           currentPage: pageNumber,
-//           totalPages: 0,
-//           pageSize: pageLimit,
-//         },
 //       });
 //     }
+
+//     res.status(200).json({
+//       success: true,
+//       stores,
+//     });
 //   } catch (error) {
-//     console.error('Store filtering error:', error);
+//     console.error("Error fetching stores:", error.message);
 //     res.status(500).json({
-//       message: 'Error filtering stores',
+//       success: false,
+//       message: "Internal Server Error",
 //       error: error.message,
 //     });
 //   }
 // };
-
 
 
 

@@ -48,10 +48,9 @@ const AllStore = () => {
   const navigate = useNavigate();
   const [selectedStore, setSelectedStore] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [selectedRows, setSelectedRows] = useState([]); 
 
-  const [selectedRows, setSelectedRows] = useState([]);
-  const debounceTimeout = 500; // Delay for debounce
-  let debounceTimer;
+  const debounceTimeout = 500;
 
   const handleSelect = (index) => {
     if (selectedRows.includes(index)) {
@@ -99,8 +98,6 @@ const AllStore = () => {
     setIsEditing(true);
   };
 
-
-
   useEffect(() => {
     fetchCategories();
   }, []);
@@ -132,7 +129,6 @@ const AllStore = () => {
     fetchStores();
   }, [filter]);
 
- 
   const fetchCategories = async () => {
     try {
       const response = await axios.get(
@@ -285,6 +281,19 @@ const AllStore = () => {
       setError("Error deleting store.");
     }
   };
+  // newly updte
+  const handleDeleteSelectedStores = async () => {
+    const idsToDelete = selectedRows.map(index => stores[index]._id);
+    try {
+      await Promise.all(idsToDelete.map(id => axios.delete(`http://localhost:5175/api/v1/stores/deletestore/${id}`)));
+      setStores(prevStores => prevStores.filter((_, index) => !selectedRows.includes(index)));
+      setSuccess("Selected stores deleted successfully.");
+      setSelectedRows([]); // Clear selected rows after deletion
+    } catch (error) {
+      setError("Error deleting selected stores.");
+    }
+  };
+  // newlyUpdate
 
   const rows = stores
     .filter((store) =>
@@ -292,8 +301,10 @@ const AllStore = () => {
     )
     .slice(page * rowsPerPage, (page + 1) * rowsPerPage)
     .map((store) => [
+      store.company,
       store.name,
       store.email,
+      store.address.city,
       store.websiteURL || "-",
       store.category?.name || "-",
       <Switch
@@ -342,6 +353,16 @@ const AllStore = () => {
         <Button variant="contained" color="primary" onClick={handleAddStore}>
           Add Store
         </Button>
+        {/* newlyUpdate */}
+        <Button
+          variant="contained"
+          color="error"
+          onClick={handleDeleteSelectedStores}
+          disabled={selectedRows.length === 0}
+        >
+          Delete Selected
+        </Button>
+        {/* newlyUpdate */}
       </Stack>
       <Snackbar open={!!success} autoHideDuration={3000}>
         <Alert severity="success">{success}</Alert>
@@ -359,13 +380,18 @@ const AllStore = () => {
             <TableHead>
               <TableRow>
                 <TableCell>Select</TableCell>
+                <TableCell>Company</TableCell>
                 <TableCell>Name</TableCell>
                 <TableCell>Email</TableCell>
+                <TableCell>City</TableCell>
                 <TableCell>Website</TableCell>
                 <TableCell>Category</TableCell>
                 <TableCell>Action</TableCell>
                 <TableCell>Options</TableCell>
               </TableRow>
+              {/* addnew */}
+
+              {/* addnew */}
             </TableHead>
             <TableBody>
               {rows.map((row, index) => (

@@ -19,7 +19,10 @@ import {
   fetchStoresByCategoryAndDistance,
   getStoresByCategoryAndStatus,
   getStoresByDistanceAndStatus,
-  getFilteredStores
+   getFilteredStores,
+  getStoresByFilters
+  ,
+
   
 } from "../controllers/StoreController.js";
 import { getWay } from "../controllers/routeController.js";
@@ -48,7 +51,9 @@ router.get("/geocode", getGeocode);
 router.get("/category-distance", fetchStoresByCategoryAndDistance);
 router.get("/category-status", getStoresByCategoryAndStatus);
 router.get("/by-distance", getStoresByDistanceAndStatus);
-router.get('/filter', getFilteredStores);
+ router.get('/filter', getFilteredStores);
+router.get("/location-category-status", getStoresByFilters);
+
 
 
 export default router;

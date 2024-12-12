@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   Table,
@@ -29,6 +30,7 @@ import axios from "axios";
 
 const Category = () => {
   const [categories, setCategories] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState([]);
   const [currentCategory, setCurrentCategory] = useState({
     name: "",
     description: "",
@@ -74,7 +76,18 @@ const Category = () => {
   }, []);
 
   // Save category (Add/Edit)
+
   const handleSaveCategory = async () => {
+    // Validate required fields
+    if (!currentCategory.name.trim()) {
+      showSnackbar("Name is required!", "error");
+      return;
+    }
+    if (!currentCategory.description.trim()) {
+      showSnackbar("Description is required!", "error");
+      return;
+    }
+  
     try {
       if (editMode) {
         await axios.put(
@@ -98,6 +111,30 @@ const Category = () => {
       showSnackbar("Failed to save category!", "error");
     }
   };
+  // const handleSaveCategory = async () => {
+  //   try {
+  //     if (editMode) {
+  //       await axios.put(
+  //         `http://localhost:5175/api/v1/category/updateCategory/${currentCategory._id}`,
+  //         currentCategory
+  //       );
+  //       showSnackbar("Category updated successfully!");
+  //     } else {
+  //       await axios.post(
+  //         "http://localhost:5175/api/v1/category/createcategory",
+  //         currentCategory
+  //       );
+  //       showSnackbar("Category added successfully!");
+  //     }
+  //     fetchCategories();
+  //     setModalOpen(false);
+  //     setCurrentCategory({ name: "", description: "", published: false });
+  //     setEditMode(false);
+  //   } catch (error) {
+  //     console.error("Error saving category:", error);
+  //     showSnackbar("Failed to save category!", "error");
+  //   }
+  // };
 
   // Delete category
   const handleDeleteCategory = async (id) => {
@@ -110,6 +147,23 @@ const Category = () => {
     } catch (error) {
       console.error("Error deleting category:", error);
       showSnackbar("Failed to delete category!", "error");
+    }
+  };
+
+  // Delete multiple categories
+  const handleDeleteSelectedCategories = async () => {
+    try {
+      await Promise.all(
+        selectedCategories.map((id) =>
+          axios.delete(`http://localhost:5175/api/v1/category/deletecategory/${id}`)
+        )
+      );
+      showSnackbar("Selected categories deleted successfully!");
+      setSelectedCategories([]);
+      fetchCategories();
+    } catch (error) {
+      console.error("Error deleting selected categories:", error);
+      showSnackbar("Failed to delete selected categories!", "error");
     }
   };
 
@@ -126,6 +180,22 @@ const Category = () => {
       console.error("Error updating publish status:", error);
       showSnackbar("Failed to update publish status!", "error");
     }
+  };
+
+  const handleSelectAll = (event) => {
+    if (event.target.checked) {
+      setSelectedCategories(filteredCategories.map((category) => category._id));
+    } else {
+      setSelectedCategories([]);
+    }
+  };
+
+  const handleSelectCategory = (id) => {
+    setSelectedCategories((prevSelected) =>
+      prevSelected.includes(id)
+        ? prevSelected.filter((selectedId) => selectedId !== id)
+        : [...prevSelected, id]
+    );
   };
 
   const filteredCategories = categories.filter((category) =>
@@ -148,8 +218,6 @@ const Category = () => {
 
   return (
     <div style={{ width: "80%", margin: "auto", marginTop: "20px" }}>
-      {/* <h1>Categories List</h1> */}
-
       <div
         style={{
           display: "flex",
@@ -184,13 +252,34 @@ const Category = () => {
         >
           Add Category
         </Button>
+        <Button
+          variant="contained"
+          color="secondary"
+          style={{ marginLeft: "10px" }}
+          onClick={handleDeleteSelectedCategories}
+          disabled={selectedCategories.length === 0}
+        >
+          Delete Selected
+        </Button>
       </div>
 
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Select</TableCell>
+              <TableCell>
+                <Checkbox
+                  indeterminate={
+                    selectedCategories.length > 0 &&
+                    selectedCategories.length < filteredCategories.length
+                  }
+                  checked={
+                    filteredCategories.length > 0 &&
+                    selectedCategories.length === filteredCategories.length
+                  }
+                  onChange={handleSelectAll}
+                />
+              </TableCell>
               <TableCell>Name</TableCell>
               <TableCell>Published</TableCell>
               <TableCell>Actions</TableCell>
@@ -200,7 +289,10 @@ const Category = () => {
             {paginatedCategories.map((category) => (
               <TableRow key={category._id}>
                 <TableCell>
-                  <Checkbox />
+                  <Checkbox
+                    checked={selectedCategories.includes(category._id)}
+                    onChange={() => handleSelectCategory(category._id)}
+                  />
                 </TableCell>
                 <TableCell>{category.name}</TableCell>
                 <TableCell>
@@ -222,14 +314,12 @@ const Category = () => {
                   >
                     <EditIcon />
                   </IconButton>
-                  Edit
                   <IconButton
                     color="secondary"
                     onClick={() => handleDeleteCategory(category._id)}
                   >
                     <DeleteIcon />
                   </IconButton>
-                  Delete
                 </TableCell>
               </TableRow>
             ))}

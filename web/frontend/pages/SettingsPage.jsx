@@ -26,14 +26,15 @@ const SettingsPage = ({ storeId }) => {
   const [radius, setRadius] = useState("5"); // Set default radius
   const [unit, setUnit] = useState("km"); // Set default unit
   const [mapColor, setMapColor] = useState("#3498db"); // Set default color
-  const [center, setCenter] = useState([35.6895, 139.6917]); // Default location (Tokyo)
+  const [center, setCenter] = useState([23.0225, 72.5714]); // Default location (Tokyo)
   const [enableGeolocation, setEnableGeolocation] = useState(false);
 
   useEffect(() => {
     const fetchSettings = async () => {
       try {
         const response = await fetch(
-          `http://localhost:5175/api/v1/settings/${storeId}`
+          //  `http://localhost:5175/api/v1/settings/${storeId}`
+          `http://localhost:5175/api/v1/settings/default`
         );
         if (response.ok) {
           const settings = await response.json();
@@ -43,7 +44,7 @@ const SettingsPage = ({ storeId }) => {
           setRadius(settings.radius || "10");
           setUnit(settings.unit || "km");
           setMapColor(settings.mapColor || "#3498db");
-          setCenter(settings.centerCoordinates || [35.6895, 139.6917]);
+          setCenter(settings.centerCoordinates || [23.0225, 72.5714]);
           setEnableGeolocation(settings.enableGeolocation || false);
         } else {
           alert("Failed to fetch settings.");

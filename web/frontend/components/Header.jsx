@@ -1,16 +1,17 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import {  NavLink } from 'react-router-dom';
+import "../styles/header.css";
 function NavigationBar() {
 
 
   return (
     <header className="cd-header-nav">
       <nav>
-        <Link to="/">Store List</Link>
-        <Link to="/settings">Settings</Link>
-         <Link to= "/category">Category</Link> 
-        <Link to="/pricing">Pricing</Link>
-         <Link to="/userstorelist">Store on Map</Link> 
+        <NavLink to="/"  activeClassName="active">Store List</NavLink>
+        <NavLink to="/settings" activeClassName="active">Settings</NavLink>
+         <NavLink to= "/category" activeClassName="active">Category</NavLink> 
+        <NavLink to="/pricing" activeClassName="active">Pricing</NavLink>
+         {/* <NavLink to="/userstorelist">Store on Map</NavLink>  */}
    
 
 

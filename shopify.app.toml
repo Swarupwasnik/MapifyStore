@@ -3,7 +3,7 @@
 client_id = "b99d9e7797e3cc43d591fd60c41b90e3"
 name = "new one"
 handle = "new-one-10"
-application_url = "https://unavailable-interpreted-increasing-flashing.trycloudflare.com"
+application_url = "https://allocation-eagles-ss-tel.trycloudflare.com"
 embedded = true
 
 [build]
@@ -568,7 +568,64 @@ redirect_urls = [
   "https://realtor-ambient-slovak-license.trycloudflare.com/api/auth/callback",
   "https://unavailable-interpreted-increasing-flashing.trycloudflare.com/auth/callback",
   "https://unavailable-interpreted-increasing-flashing.trycloudflare.com/auth/shopify/callback",
-  "https://unavailable-interpreted-increasing-flashing.trycloudflare.com/api/auth/callback"
+  "https://unavailable-interpreted-increasing-flashing.trycloudflare.com/api/auth/callback",
+  "https://bunny-mat-network-donor.trycloudflare.com/auth/callback",
+  "https://bunny-mat-network-donor.trycloudflare.com/auth/shopify/callback",
+  "https://bunny-mat-network-donor.trycloudflare.com/api/auth/callback",
+  "https://oasis-sanyo-oc-pattern.trycloudflare.com/auth/callback",
+  "https://oasis-sanyo-oc-pattern.trycloudflare.com/auth/shopify/callback",
+  "https://oasis-sanyo-oc-pattern.trycloudflare.com/api/auth/callback",
+  "https://supports-phases-means-katrina.trycloudflare.com/auth/callback",
+  "https://supports-phases-means-katrina.trycloudflare.com/auth/shopify/callback",
+  "https://supports-phases-means-katrina.trycloudflare.com/api/auth/callback",
+  "https://women-cement-fuji-equal.trycloudflare.com/auth/callback",
+  "https://women-cement-fuji-equal.trycloudflare.com/auth/shopify/callback",
+  "https://women-cement-fuji-equal.trycloudflare.com/api/auth/callback",
+  "https://wooden-usb-vertical-collins.trycloudflare.com/auth/callback",
+  "https://wooden-usb-vertical-collins.trycloudflare.com/auth/shopify/callback",
+  "https://wooden-usb-vertical-collins.trycloudflare.com/api/auth/callback",
+  "https://mood-initiated-collector-usb.trycloudflare.com/auth/callback",
+  "https://mood-initiated-collector-usb.trycloudflare.com/auth/shopify/callback",
+  "https://mood-initiated-collector-usb.trycloudflare.com/api/auth/callback",
+  "https://cooperation-conferences-millions-disclose.trycloudflare.com/auth/callback",
+  "https://cooperation-conferences-millions-disclose.trycloudflare.com/auth/shopify/callback",
+  "https://cooperation-conferences-millions-disclose.trycloudflare.com/api/auth/callback",
+  "https://josh-united-citysearch-brush.trycloudflare.com/auth/callback",
+  "https://josh-united-citysearch-brush.trycloudflare.com/auth/shopify/callback",
+  "https://josh-united-citysearch-brush.trycloudflare.com/api/auth/callback",
+  "https://stephen-marking-valves-accepting.trycloudflare.com/auth/callback",
+  "https://stephen-marking-valves-accepting.trycloudflare.com/auth/shopify/callback",
+  "https://stephen-marking-valves-accepting.trycloudflare.com/api/auth/callback",
+  "https://lamb-places-jay-fetish.trycloudflare.com/auth/callback",
+  "https://lamb-places-jay-fetish.trycloudflare.com/auth/shopify/callback",
+  "https://lamb-places-jay-fetish.trycloudflare.com/api/auth/callback",
+  "https://afraid-saskatchewan-integrated-cultures.trycloudflare.com/auth/callback",
+  "https://afraid-saskatchewan-integrated-cultures.trycloudflare.com/auth/shopify/callback",
+  "https://afraid-saskatchewan-integrated-cultures.trycloudflare.com/api/auth/callback",
+  "https://syntax-omaha-storage-memory.trycloudflare.com/auth/callback",
+  "https://syntax-omaha-storage-memory.trycloudflare.com/auth/shopify/callback",
+  "https://syntax-omaha-storage-memory.trycloudflare.com/api/auth/callback",
+  "https://patterns-zshops-portrait-muscle.trycloudflare.com/auth/callback",
+  "https://patterns-zshops-portrait-muscle.trycloudflare.com/auth/shopify/callback",
+  "https://patterns-zshops-portrait-muscle.trycloudflare.com/api/auth/callback",
+  "https://resident-tears-contains-path.trycloudflare.com/auth/callback",
+  "https://resident-tears-contains-path.trycloudflare.com/auth/shopify/callback",
+  "https://resident-tears-contains-path.trycloudflare.com/api/auth/callback",
+  "https://tape-lots-principles-conf.trycloudflare.com/auth/callback",
+  "https://tape-lots-principles-conf.trycloudflare.com/auth/shopify/callback",
+  "https://tape-lots-principles-conf.trycloudflare.com/api/auth/callback",
+  "https://viewed-album-face-joel.trycloudflare.com/auth/callback",
+  "https://viewed-album-face-joel.trycloudflare.com/auth/shopify/callback",
+  "https://viewed-album-face-joel.trycloudflare.com/api/auth/callback",
+  "https://darwin-laden-supported-unified.trycloudflare.com/auth/callback",
+  "https://darwin-laden-supported-unified.trycloudflare.com/auth/shopify/callback",
+  "https://darwin-laden-supported-unified.trycloudflare.com/api/auth/callback",
+  "https://wan-competitors-incidence-races.trycloudflare.com/auth/callback",
+  "https://wan-competitors-incidence-races.trycloudflare.com/auth/shopify/callback",
+  "https://wan-competitors-incidence-races.trycloudflare.com/api/auth/callback",
+  "https://allocation-eagles-ss-tel.trycloudflare.com/auth/callback",
+  "https://allocation-eagles-ss-tel.trycloudflare.com/auth/shopify/callback",
+  "https://allocation-eagles-ss-tel.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
