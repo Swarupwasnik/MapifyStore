@@ -10,43 +10,51 @@ import {
 } from "react-leaflet";
 import L from "leaflet";
 import "../styles/settings.css";
-import { SettingsContext } from "../context/SettingsContext";
+import { Alert, Snackbar } from "@mui/material"; 
+
+// Leaflet icon configuration
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl:
-    "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
   iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
   shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
 });
 
-const SettingsPage = ({ storeId }) => {
+const SettingsPage = () => {
+  // State variables
   const [company, setCompany] = useState("");
   const [contactEmail, setContactEmail] = useState("");
   const [zoomLevel, setZoomLevel] = useState(10);
-  const [radius, setRadius] = useState("5"); // Set default radius
-  const [unit, setUnit] = useState("km"); // Set default unit
-  const [mapColor, setMapColor] = useState("#3498db"); // Set default color
-  const [center, setCenter] = useState([23.0225, 72.5714]); // Default location (Tokyo)
+  const [radius, setRadius] = useState("5");
+  const [unit, setUnit] = useState("km");
+  const [mapColor, setMapColor] = useState("#3498db");
+  const [center, setCenter] = useState([21.1458, 79.0882]); 
   const [enableGeolocation, setEnableGeolocation] = useState(false);
+  const [alert, setAlert] = useState({ message: "", type: "", open: false });
 
+  const showAlert = (message, type) => {
+    setAlert({ message, type, open: true });
+  };
+  const handleCloseAlert = () => {
+    setAlert((prev) => ({ ...prev, open: false }));
+  };
+  // Fetch settings on component mount
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const response = await fetch(
-          //  `http://localhost:5175/api/v1/settings/${storeId}`
-          `http://localhost:5175/api/v1/settings/default`
-        );
+        const response = await fetch(`http://localhost:5175/api/v1/settings/settings1`);
         if (response.ok) {
           const settings = await response.json();
           setCompany(settings.companyName || "");
           setContactEmail(settings.contactEmail || "");
           setZoomLevel(settings.zoomLevel || 10);
-          setRadius(settings.radius || "10");
+          setRadius(settings.radius || "5");
           setUnit(settings.unit || "km");
           setMapColor(settings.mapColor || "#3498db");
-          setCenter(settings.centerCoordinates || [23.0225, 72.5714]);
+          setCenter(settings.centerCoordinates || [21.1458, 79.0882]);
           setEnableGeolocation(settings.enableGeolocation || false);
         } else {
+          console.error("Failed to fetch settings");
           alert("Failed to fetch settings.");
         }
       } catch (error) {
@@ -56,35 +64,34 @@ const SettingsPage = ({ storeId }) => {
     };
 
     fetchSettings();
-  }, [storeId]);
+  }, []);
+
+  // Save settings handler
   const handleSave = async () => {
+    // Validation
     if (!company.trim()) {
-      alert("Company Name is required.");
+      showAlert("Company Name is required.");
       return;
     }
 
     if (!contactEmail.trim() || !/\S+@\S+\.\S+/.test(contactEmail)) {
-      alert("A valid Contact Email is required.");
+      showAlert("A valid Contact Email is required.");
       return;
     }
 
     if (!radius || isNaN(Number(radius)) || Number(radius) <= 0) {
-      alert("Radius must be a valid positive number.");
+      showAlert("Radius must be a valid positive number.");
       return;
     }
 
-    if (
-      !center ||
-      center.length !== 2 ||
-      isNaN(center[0]) ||
-      isNaN(center[1])
-    ) {
-      alert("Center coordinates must be valid latitude and longitude values.");
+    if (!center || center.length !== 2 || isNaN(center[0]) || isNaN(center[1])) {
+      showAlert("Center coordinates must be valid latitude and longitude values.");
       return;
     }
+
     try {
+      // Prepare settings object
       const updatedSettings = {
-        storeId,
         companyName: company,
         contactEmail: contactEmail,
         radius,
@@ -95,38 +102,32 @@ const SettingsPage = ({ storeId }) => {
         enableGeolocation,
       };
 
-      const response = await fetch(
-        `http://localhost:5175/api/v1/settings/updatesettings`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(updatedSettings),
-        }
-      );
+      // Send update request
+      const response = await fetch(`http://localhost:5175/api/v1/settings/settings1`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedSettings),
+      });
 
       if (response.ok) {
-        alert("Settings saved successfully!");
-        setCompany("");
-        setContactEmail("");
-        setRadius("5");
-        setUnit("km");
-        setZoomLevel(10);
-        setMapColor("#3498db");
-        setCenter([35.6895, 139.6917]);
-        setEnableGeolocation(false);
+        showAlert("Settings saved successfully!");
       } else {
-        alert("Error saving settings.");
+        const errorData = await response.json();
+        showAlert(`Error saving settings: ${errorData.error}`);
       }
     } catch (error) {
       console.error("Error saving settings:", error);
-      alert("Error saving settings.");
+      showAlert("Error saving settings.");
     }
   };
 
+  // Cancel handler
   const handleCancel = () => {
-    alert("Changes canceled.");
+    // Reload the original settings
+    window.location.reload();
   };
 
+  // Dynamic Map Component
   const DynamicMap = ({ zoomLevel, center, mapColor }) => {
     const map = useMap();
 
@@ -140,6 +141,16 @@ const SettingsPage = ({ storeId }) => {
 
   return (
     <div className="store-locator-settings">
+     <Snackbar
+        open={alert.open}
+        autoHideDuration={3000}
+        onClose={handleCloseAlert}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert onClose={handleCloseAlert} severity={alert.type}>
+          {alert.message}
+        </Alert>
+      </Snackbar>
       <h2 className="store-ls-top">Store Locator Settings</h2>
 
       <div className="store-locator-section store-general-info">
@@ -170,11 +181,10 @@ const SettingsPage = ({ storeId }) => {
                 value={radius}
                 onChange={(e) => setRadius(e.target.value)}
               >
-                <option value="5">5 KM</option>
+                <option value="2">2KM</option>
+                <option value="5">5KM</option>
                 <option value="10">10 KM</option>
-                <option value="20">20 KM</option>
               </select>
-              <label>Distance Unit</label>
             </div>
 
             <div className="store-locator-field">
@@ -238,11 +248,6 @@ const SettingsPage = ({ storeId }) => {
                 center={center}
                 mapColor={mapColor}
               />
-              <DynamicMap
-                zoomLevel={zoomLevel}
-                center={center}
-                mapColor={mapColor}
-              />
             </MapContainer>
           </div>
         </div>
@@ -278,3 +283,9 @@ const SettingsPage = ({ storeId }) => {
 };
 
 export default SettingsPage;
+
+
+
+
+
+

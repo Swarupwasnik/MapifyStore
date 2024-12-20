@@ -60,25 +60,25 @@ export const getWaypoints = async (req, res) => {
     // Validate Input
     if (!Array.isArray(locations) || locations.length !== 2) {
       return res.status(400).json({
-        error: 'Invalid locations',
-        details: 'Provide an array of exactly 2 locations'
+        error: "Invalid locations",
+        details: "Provide an array of exactly 2 locations",
       });
     }
 
     // Geocode Locations
     const waypoints = await Promise.all(
-      locations.map(location => geocodeLocation(location, shop))
+      locations.map((location) => geocodeLocation(location, shop))
     );
 
     // Validate Waypoints
-    const validWaypoints = waypoints.filter(wp => 
-      wp.latitude && wp.longitude
+    const validWaypoints = waypoints.filter(
+      (wp) => wp.latitude && wp.longitude
     );
 
     if (validWaypoints.length < 2) {
       return res.status(404).json({
-        error: 'Insufficient geocoding results',
-        details: 'Could not find coordinates for provided locations'
+        error: "Insufficient geocoding results",
+        details: "Could not find coordinates for provided locations",
       });
     }
 
@@ -86,18 +86,17 @@ export const getWaypoints = async (req, res) => {
       waypoints: validWaypoints,
       metadata: {
         timestamp: new Date().toISOString(),
-        source: 'Nominatim'
-      }
+        source: "Nominatim",
+      },
     });
   } catch (error) {
-    console.error('Waypoints Error:', error);
+    console.error("Waypoints Error:", error);
     res.status(500).json({
-      error: 'Waypoints Calculation Failed',
-      details: error.message
+      error: "Waypoints Calculation Failed",
+      details: error.message,
     });
   }
 };
-
 
 // export const getWaypoints = async (req, res) => {
 //   try {
@@ -142,7 +141,9 @@ async function geocodeLocation(loc) {
   const data = result.unwrap();
   return data;
 }
+// newly update
 
+// newlyupdate
 export const addStore = async (req, res) => {
   try {
     const {
@@ -195,7 +196,7 @@ export const addStore = async (req, res) => {
       },
       location: {
         type: "Point",
-        coordinates: [coordinates.longitude, coordinates.latitude], // GeoJSON format
+        coordinates: [coordinates.longitude, coordinates.latitude],
       },
       workingHours,
       agreeToTerms,
@@ -214,7 +215,7 @@ export const addStore = async (req, res) => {
       .json({ error: "Error adding store", details: error.message });
   }
 };
-
+// update Store
 export const updateStore = async (req, res) => {
   try {
     const { storeId } = req.params;
@@ -301,6 +302,50 @@ export const deleteStore = async (req, res) => {
       .json({ error: "Error deleting store", details: error.message });
   }
 };
+// rightcode
+// export const searchStoresByStatus = async (req, res) => {
+//   try {
+//     const { openStatus } = req.query;
+
+//     // Check for valid openStatus input
+//     if (!openStatus || (openStatus !== "open" && openStatus !== "close")) {
+//       return res
+//         .status(400)
+//         .json({ error: "Invalid openStatus. Use 'open' or 'close'." });
+//     }
+
+//     // Fetch only published stores and categories
+//     const stores = await Store.find({ published: true })
+//       .populate({
+//         path: "category",
+//         match: { published: true }, // Ensure only published categories are included
+//         select: "name",
+//       })
+//       .exec();
+
+//     // Filter stores to exclude those with no category (due to unpublished categories)
+//     const validStores = stores.filter((store) => store.category);
+
+//     // Further filter based on openStatus
+//     const filteredStores = validStores.filter((store) =>
+//       openStatus === "open" ? store.isStoreOpen() : !store.isStoreOpen()
+//     );
+
+//     // If no stores match, return a 404 response
+//     if (filteredStores.length === 0) {
+//       return res
+//         .status(404)
+//         .json({ error: "No stores found with the specified open status" });
+//     }
+
+//     // Return the filtered stores
+//     res.json(filteredStores);
+//   } catch (error) {
+//     console.error("Error in searchStoresByStatus:", error);
+//     res.status(500).json({ error: error.message });
+//   }
+// };
+// rightcode
 
 export const searchStoresByStatus = async (req, res) => {
   try {
@@ -423,11 +468,17 @@ export const togglePublishStore = async (req, res) => {
 
 export const getPublishedStores = async (req, res) => {
   try {
-    const stores = await Store.find({ published: true }).populate(
-      "category",
-      "name"
-    );
-    res.status(200).json(stores);
+    const stores = await Store.find({ published: true })
+      .populate({
+        path: "category",
+        match: { published: true },
+        select: "name",
+      })
+      .lean();
+
+    const filteredStores = stores.filter((store) => store.category !== null);
+
+    res.status(200).json(filteredStores);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch published stores" });
   }
@@ -441,7 +492,51 @@ export const getUnpublishedStores = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch unpublished stores" });
   }
 };
+// right code
+// export const getStoresByStatus = async (req, res) => {
+//   try {
+//     const { status } = req.query;
 
+//     if (!status || (status !== "open" && status !== "close")) {
+//       return res
+//         .status(400)
+//         .json({ error: "Invalid status. Use 'open' or 'close'." });
+//     }
+
+//     const currentTime = moment();
+
+//     // Fetch stores that are published and have published categories
+//     const stores = await Store.find({ published: true })
+//       .populate({
+//         path: "category",
+//         match: { published: true }, // Only include published categories
+//         select: "name",
+//       })
+//       .lean();
+
+//     // Filter out stores that do not have a published category
+//     const filteredStores = stores.filter((store) => store.category !== null);
+
+//     // Further filter based on open/close status
+//     const finalStores = filteredStores.filter((store) => {
+//       const { openTime, closeTime } = store.workingHours;
+//       const storeOpenTime = moment(openTime, "HH:mm");
+//       const storeCloseTime = moment(closeTime, "HH:mm");
+
+//       const isOpen = currentTime.isBetween(storeOpenTime, storeCloseTime);
+
+//       return status === "open" ? isOpen : !isOpen;
+//     });
+
+//     res.status(200).json({ status, stores: finalStores });
+//   } catch (error) {
+//     console.error("Error fetching store list:", error);
+//     res
+//       .status(500)
+//       .json({ error: "Error fetching store list", details: error.message });
+//   }
+// };
+// rightcode
 export const getStoresByStatus = async (req, res) => {
   try {
     const { status } = req.query;
@@ -497,7 +592,9 @@ export const fetchStoresByCategoryAndDistance = async (req, res) => {
 
     // Validate inputs
     if (!categoryId || !latitude || !longitude || !distance) {
-      return res.status(400).json({ error: "All query parameters are required" });
+      return res
+        .status(400)
+        .json({ error: "All query parameters are required" });
     }
 
     const radiusInMeters = Number(distance) * 1000; // Convert km to meters
@@ -534,61 +631,61 @@ export const getStoresByCategoryAndStatus = async (req, res) => {
 
   // Ensure categoryName is provided in the request
   if (!categoryName) {
-    return res.status(400).json({ error: 'Category name is required' });
+    return res.status(400).json({ error: "Category name is required" });
   }
 
   try {
     // Find the category ID based on the provided category name
     const category = await Category.findOne({ name: categoryName });
     if (!category) {
-      return res.status(404).json({ error: 'Category not found' });
+      return res.status(404).json({ error: "Category not found" });
     }
 
     const query = {
-      shop: shop,  
-      category: category._id,  
-      published: true,  
+      shop: shop,
+      category: category._id,
+      published: true,
     };
 
-    console.log('Constructed Query:', query);
+    console.log("Constructed Query:", query);
 
     // Fetch stores based on the query
-    let stores = await Store.find(query).populate('category', 'name');
+    let stores = await Store.find(query).populate("category", "name");
 
-    console.log('Fetched Stores:', stores);
+    console.log("Fetched Stores:", stores);
 
     if (!stores.length) {
-      console.warn('No stores found for the given criteria.');
-      return res.status(404).json({ error: 'No stores found' });
+      console.warn("No stores found for the given criteria.");
+      return res.status(404).json({ error: "No stores found" });
     }
 
-    // Filter stores by open/close status if provided
     if (openStatus) {
-      const isOpen = openStatus === 'open';
-      console.log(`Filtering stores for openStatus=${openStatus}, isOpen=${isOpen}`);
-      
-      // Filter stores based on the `isStoreOpen()` method
+      const isOpen = openStatus === "open";
+      console.log(
+        `Filtering stores for openStatus=${openStatus}, isOpen=${isOpen}`
+      );
+
       stores = stores.filter((store) => store.isStoreOpen() === isOpen);
 
-      console.log('Stores after filtering by openStatus:', stores);
+      console.log("Stores after filtering by openStatus:", stores);
     }
 
-    // Return the filtered stores as a JSON response
     res.json(stores);
   } catch (error) {
-    console.error('Error fetching stores:', error);
-    res.status(500).json({ error: 'Error fetching stores', details: error.message });
+    console.error("Error fetching stores:", error);
+    res
+      .status(500)
+      .json({ error: "Error fetching stores", details: error.message });
   }
 };
-
-
-
 
 export const getStoresByDistanceAndStatus = async (req, res) => {
   const { latitude, longitude, distance = 1000 } = req.query;
 
   if (!latitude || !longitude) {
-    return res.status(400).json({ message: "Latitude and Longitude are required." });
+    return res
+      .status(400)
+      .json({ message: "Latitude and Longitude are required." });
   }
 
   try {
@@ -598,7 +695,10 @@ export const getStoresByDistanceAndStatus = async (req, res) => {
     const stores = await Store.find({
       location: {
         $near: {
-          $geometry: { type: "Point", coordinates: [parseFloat(longitude), parseFloat(latitude)] },
+          $geometry: {
+            type: "Point",
+            coordinates: [parseFloat(longitude), parseFloat(latitude)],
+          },
           $maxDistance: maxDistance,
         },
       },
@@ -672,7 +772,9 @@ export const getFilteredStores = async (req, res) => {
 
     // Validate latitude and longitude
     if (!latitude || !longitude) {
-      return res.status(400).json({ error: "Latitude and longitude are required" });
+      return res
+        .status(400)
+        .json({ error: "Latitude and longitude are required" });
     }
 
     // Convert latitude and longitude to numbers
@@ -728,7 +830,8 @@ export const getFilteredStores = async (req, res) => {
       }
 
       // Check if the store is currently open
-      const isOpen = currentTime >= todayHours.start && currentTime <= todayHours.end;
+      const isOpen =
+        currentTime >= todayHours.start && currentTime <= todayHours.end;
 
       return status === "open" ? isOpen : !isOpen;
     });
@@ -745,7 +848,6 @@ export const getFilteredStores = async (req, res) => {
 
 // Filter stores based on query parameters
 
-
 export const getStoresByFilters = async (req, res) => {
   const { location, category, status } = req.query;
 
@@ -759,7 +861,7 @@ export const getStoresByFilters = async (req, res) => {
     const categoryId = categoryData._id; // Get the ObjectId of the category
 
     // Split the location into parts (city, state, country)
-    const locationParts = location.split(",").map(part => part.trim());
+    const locationParts = location.split(",").map((part) => part.trim());
     const city = locationParts[0] || "";
     const state = locationParts[1] || "";
     const country = locationParts[2] || "";
@@ -767,7 +869,7 @@ export const getStoresByFilters = async (req, res) => {
     // Build the query
     const query = {
       published: true, // Ensure the store is published
-      category: categoryId // Use the ObjectId for the category
+      category: categoryId, // Use the ObjectId for the category
     };
 
     if (city) {
@@ -783,7 +885,7 @@ export const getStoresByFilters = async (req, res) => {
     const stores = await Store.find(query).populate("category");
 
     // Filter by status if needed
-    const filteredStores = stores.filter(store => {
+    const filteredStores = stores.filter((store) => {
       return status === "open" ? store.isStoreOpen() : !store.isStoreOpen();
     });
 
@@ -793,105 +895,121 @@ export const getStoresByFilters = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-;
+export const CheckEmail = async (req, res) => {
+  const email = req.query.email;
+  const store = await Store.findOne({ email });
+  if (store) {
+    res.json({ exists: true });
+  } else {
+    res.json({ exists: false });
+  }
+};
 
+export const getStoresByLocationAndStatus = async (req, res) => {
+  try {
+    const { location, status } = req.query;
 
+    // Validate location
+    if (!location) {
+      return res.status(400).json({ error: "Location is required" });
+    }
 
-// export const getStoresByFilters = async (req, res) => {
+    // Query based on location name (e.g., city or state)
+    const locationQuery = {
+      $or: [
+        { "address.city": { $regex: location, $options: "i" } },
+        { "address.state": { $regex: location, $options: "i" } },
+      ],
+      published: true,
+    };
+
+    // Fetch stores matching the location query
+    const stores = await Store.find(locationQuery);
+
+    // Get current day and time
+    const today = new Date();
+    const dayName = today.toLocaleString("en-US", { weekday: "long" });
+    const currentTime = today.toTimeString().slice(0, 5);
+
+    // Filter stores based on status
+    const filteredStores = stores.filter((store) => {
+      const workingHours = store.workingHours || [];
+      const todayHours = workingHours.find((hours) => hours.day === dayName);
+
+      if (!todayHours || !todayHours.isOpen) {
+        // If no working hours for today or the store is closed all day
+        return status === "closed";
+      }
+
+      // Check if the store is currently open
+      const isOpen =
+        currentTime >= todayHours.start && currentTime <= todayHours.end;
+
+      return status === "open" ? isOpen : !isOpen;
+    });
+
+    // Respond with the filtered stores
+    res.json(filteredStores);
+  } catch (error) {
+    console.error("Error fetching stores by location and status:", error);
+    res.status(500).json({ error: "Failed to fetch stores" });
+  }
+};
+
+// export const getStoresByLocationAndStatus = async (req, res) => {
 //   try {
-//     const { location, category, status } = req.query;
+//     const { location, status } = req.query;
 
-//     // Validate required query parameters
-//     if (!location || !status) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Location and status query parameters are required",
-//       });
+//     // Validate location
+//     if (!location) {
+//       return res.status(400).json({ error: "Location is required" });
 //     }
 
-//     // Fetch stores with categories joined
-//     let stores = await Store.aggregate([
-//       {
-//         $lookup: {
-//           from: "categories", // The actual name of your categories collection
-//           localField: "category",
-//           foreignField: "_id",
-//           as: "categoryDetails",
-//         },
-//       },
-//       {
-//         $project: {
-//           company: 1,
-//           name: 1,
-//           email: 1,
-//           phone: 1,
-//           address: 1,
-//           categoryDetails: { $arrayElemAt: ["$categoryDetails", 0] },
-//           workingHours: 1,
-//         },
-//       },
-//     ]);
+//     // Split location into latitude and longitude
+//     const [latitude, longitude] = location.split(",").map(parseFloat);
 
-//     // Filter stores based on location
-//     stores = stores.filter(store => {
-//       const locationMatch =
-//         store.address.city?.toLowerCase().includes(location.toLowerCase()) ||
-//         store.address.state?.toLowerCase().includes(location.toLowerCase()) ||
-//         store.address.street?.toLowerCase().includes(location.toLowerCase());
-//       return locationMatch;
-//     });
-
-//     // Optional filtering by category
-//     if (category) {
-//       stores = stores.filter(store =>
-//         store.categoryDetails?.name?.toLowerCase() === category.toLowerCase()
-//       );
+//     if (isNaN(latitude) || isNaN(longitude)) {
+//       return res.status(400).json({ error: "Invalid location format. Use 'latitude,longitude'" });
 //     }
 
-//     // Filter stores based on their open/closed status
+//     // Base query for geospatial filtering
+//     const query = {
+//       "location.coordinates": {
+//         $geoWithin: {
+//           $centerSphere: [[longitude, latitude], 10 / 6378.1], // 10 km radius (default)
+//         },
+//       },
+//       published: true,
+//     };
+
+//     // Fetch stores within the distance
+//     const stores = await Store.find(query);
+
+//     // Get current day and time
 //     const today = new Date();
-//     const todayName = today.toLocaleString("en-US", { weekday: "long" });
+//     const dayName = today.toLocaleString("en-US", { weekday: "long" });
 //     const currentTime = today.toTimeString().slice(0, 5);
 
-//     stores = stores.filter(store => {
+//     // Filter stores based on status
+//     const filteredStores = stores.filter((store) => {
 //       const workingHours = store.workingHours || [];
-//       const todayHours = workingHours.find(
-//         day => day.day.toLowerCase() === todayName.toLowerCase()
-//       );
+//       const todayHours = workingHours.find((hours) => hours.day === dayName);
 
-//       // If the store is closed today
 //       if (!todayHours || !todayHours.isOpen) {
+//         // If no working hours for today or the store is closed all day
 //         return status === "closed";
 //       }
 
-//       // Compare current time with store's opening and closing times
-//       const isOpen =
-//         currentTime >= todayHours.start && currentTime <= todayHours.end;
+//       // Check if the store is currently open
+//       const isOpen = currentTime >= todayHours.start && currentTime <= todayHours.end;
+
 //       return status === "open" ? isOpen : !isOpen;
 //     });
 
 //     // Respond with the filtered stores
-//     if (!stores.length) {
-//       return res.status(200).json({
-//         success: true,
-//         message: "No stores found",
-//         stores: [],
-//       });
-//     }
-
-//     res.status(200).json({
-//       success: true,
-//       stores,
-//     });
+//     res.json(filteredStores);
 //   } catch (error) {
-//     console.error("Error fetching stores:", error.message);
-//     res.status(500).json({
-//       success: false,
-//       message: "Internal Server Error",
-//       error: error.message,
-//     });
+//     console.error("Error fetching stores by location and status:", error);
+//     res.status(500).json({ error: "Failed to fetch stores" });
 //   }
 // };
-
-
-

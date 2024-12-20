@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   Table,
@@ -87,7 +86,7 @@ const Category = () => {
       showSnackbar("Description is required!", "error");
       return;
     }
-  
+
     try {
       if (editMode) {
         await axios.put(
@@ -108,33 +107,9 @@ const Category = () => {
       setEditMode(false);
     } catch (error) {
       console.error("Error saving category:", error);
-      showSnackbar("Failed to save category!", "error");
+      showSnackbar("Category is Already Exist", "error");
     }
   };
-  // const handleSaveCategory = async () => {
-  //   try {
-  //     if (editMode) {
-  //       await axios.put(
-  //         `http://localhost:5175/api/v1/category/updateCategory/${currentCategory._id}`,
-  //         currentCategory
-  //       );
-  //       showSnackbar("Category updated successfully!");
-  //     } else {
-  //       await axios.post(
-  //         "http://localhost:5175/api/v1/category/createcategory",
-  //         currentCategory
-  //       );
-  //       showSnackbar("Category added successfully!");
-  //     }
-  //     fetchCategories();
-  //     setModalOpen(false);
-  //     setCurrentCategory({ name: "", description: "", published: false });
-  //     setEditMode(false);
-  //   } catch (error) {
-  //     console.error("Error saving category:", error);
-  //     showSnackbar("Failed to save category!", "error");
-  //   }
-  // };
 
   // Delete category
   const handleDeleteCategory = async (id) => {
@@ -155,7 +130,9 @@ const Category = () => {
     try {
       await Promise.all(
         selectedCategories.map((id) =>
-          axios.delete(`http://localhost:5175/api/v1/category/deletecategory/${id}`)
+          axios.delete(
+            `http://localhost:5175/api/v1/category/deletecategory/${id}`
+          )
         )
       );
       showSnackbar("Selected categories deleted successfully!");
@@ -170,17 +147,35 @@ const Category = () => {
   // Toggle publish status
   const handleTogglePublished = async (id, published) => {
     try {
+      const newPublishedState = !published; // Determine the new published state
       await axios.put(
         `http://localhost:5175/api/v1/category/updateCategory/${id}`,
-        { published: !published }
+        { published: newPublishedState }
       );
-      showSnackbar("Category publish status updated successfully!");
-      fetchCategories();
+      const successMessage = newPublishedState
+        ? "Category published successfully!"
+        : "Category unpublished successfully!";
+      showSnackbar(successMessage); // Show the appropriate message
+      fetchCategories(); // Refresh the category list
     } catch (error) {
       console.error("Error updating publish status:", error);
       showSnackbar("Failed to update publish status!", "error");
     }
   };
+
+  // const handleTogglePublished = async (id, published) => {
+  //   try {
+  //     await axios.put(
+  //       `http://localhost:5175/api/v1/category/updateCategory/${id}`,
+  //       { published: !published }
+  //     );
+  //     showSnackbar("Category publish status updated successfully!");
+  //     fetchCategories();
+  //   } catch (error) {
+  //     console.error("Error updating publish status:", error);
+  //     showSnackbar("Failed to update publish status!", "error");
+  //   }
+  // };
 
   const handleSelectAll = (event) => {
     if (event.target.checked) {

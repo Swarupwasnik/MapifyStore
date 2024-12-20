@@ -48,7 +48,7 @@ const AllStore = () => {
   const navigate = useNavigate();
   const [selectedStore, setSelectedStore] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [selectedRows, setSelectedRows] = useState([]); 
+  const [selectedRows, setSelectedRows] = useState([]);
 
   const debounceTimeout = 500;
 
@@ -92,11 +92,38 @@ const AllStore = () => {
   const handleAddStore = () => {
     navigate("/storereg");
   };
+  // added into it
+  // const handleEditStore = (store) => {
+  //   // Ensure workingHours is initialized properly
+  //   const workingHours = daysOfWeek.reduce((acc, day) => {
+  //     acc[day] = store.workingHours[day] || {
+  //       isOpen: false,
+  //       start: "",
+  //       end: "",
+  //     };
+  //     return acc;
+  //   }, {});
+
+  //   setSelectedStore({ ...store, workingHours });
+  //   setIsEditing(true);
+  // };
 
   const handleEditStore = (store) => {
-    setSelectedStore(store);
+    const workingHours = daysOfWeek.map((day) => {
+      const dayData = store.workingHours.find((wh) => wh.day === day) || {
+        isOpen: false,
+        start: "",
+        end: "",
+        customTimes: [],
+      };
+      return { ...dayData };
+    });
+
+    setSelectedStore({ ...store, workingHours });
     setIsEditing(true);
   };
+
+  // added into it
 
   useEffect(() => {
     fetchCategories();
@@ -149,6 +176,23 @@ const AllStore = () => {
       fetchStores();
     }, debounceTimeout);
   };
+  // newlyadded
+  const filteredStores = stores.filter((store) => {
+    const lowerCaseSearchValue = searchValue.toLowerCase();
+    return (
+      store.company.toLowerCase().includes(lowerCaseSearchValue) ||
+      store.name.toLowerCase().includes(lowerCaseSearchValue) ||
+      store.email.toLowerCase().includes(lowerCaseSearchValue) ||
+      store.address.city.toLowerCase().includes(lowerCaseSearchValue) ||
+      (store.category?.name &&
+        store.category.name.toLowerCase().includes(lowerCaseSearchValue))
+    );
+  });
+
+  // newlyadded
+ 
+  
+  
   const handleTogglePublished = async (storeId, isPublished) => {
     setError("");
     setSuccess("");
@@ -164,7 +208,7 @@ const AllStore = () => {
             : store
         )
       );
-      setSuccess("Store Published successfully.");
+      setSuccess("Store Status Updated successfully.");
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
       setError("Error updating store status.");
@@ -172,9 +216,45 @@ const AllStore = () => {
     }
   };
 
+  // addtocode
+
+
+  // addtocode
   const handleSaveEdit = async () => {
     if (!selectedStore) return;
+ // Validate phone number (exactly 10 digits)
+ if (!/^\d{10}$/.test(selectedStore.phone?.number)) {
+  setError("Phone number must be exactly 10 digits.");
+  setTimeout(() => setError(""), 3000);
+  return;
+}
+ // Validate fax number (exactly 4 digits)
+ if (!/^\d{4}$/.test(selectedStore.fax || "")) {
+  setError("Fax number must be exactly 4 digits.");
+  setTimeout(() => setError(""), 3000);
+  return;
+}
+     // Validate country code (starts with '+' and 1-3 digits)
+  if (!/^\+\d{1,3}$/.test(selectedStore.phone?.countryCode || "")) {
+    setError("Country code must start with '+' followed by 1 to 3 digits.");
+    setTimeout(() => setError(""), 3000);
+    return;
+  }
 
+    // Validate postal code (exactly 10 digits)
+    if (!/^\d{6}$/.test(selectedStore.address?.postalCode || "")) {
+      setError("Postal code must be exactly 6 digits.");
+      setTimeout(() => setError(""), 3000);
+      return;
+    }
+
+      // Validate additional information (maximum of 10 characters)
+  if (!/^.{1,150}$/.test(selectedStore.additional || "")) {
+    setError("Additional information must be 150 characters or less.");
+    setTimeout(() => setError(""), 3000);
+    return;
+  }
+    // Define required fields
     const requiredFields = [
       "company",
       "name",
@@ -186,9 +266,9 @@ const AllStore = () => {
       "agreeToTerms",
     ];
 
+    // Check for missing required fields
     const missingFields = requiredFields.filter((field) => {
       if (!selectedStore[field]) return true;
-
       if (field === "phone") {
         return (
           !selectedStore.phone?.countryCode || !selectedStore.phone?.number
@@ -212,12 +292,24 @@ const AllStore = () => {
       return false;
     });
 
+    // If there are missing fields, show an error
     if (missingFields.length > 0) {
       setError(`Missing required fields: ${missingFields.join(", ")}`);
       setTimeout(() => setError(""), 3000);
       return;
     }
 
+    // Construct workingHours as an array
+    const workingHours = daysOfWeek.map((day) => ({
+      day,
+      isOpen: selectedStore.workingHours[day]?.isOpen || false,
+      start: selectedStore.workingHours[day]?.start || "09:00",
+      end: selectedStore.workingHours[day]?.end || "18:00",
+      // customTimes: [],
+      customTimes: selectedStore.workingHours[day]?.customTimes || [],
+    }));
+
+    // Create payload for the API request
     const payload = {
       company: selectedStore.company,
       name: selectedStore.name,
@@ -237,35 +329,34 @@ const AllStore = () => {
         country: selectedStore.address?.country,
       },
       additional: selectedStore.additional || "",
-      workingHours: selectedStore.workingHours,
+      workingHours: workingHours,
       agreeToTerms: selectedStore.agreeToTerms,
     };
 
+    console.log("Payload being sent:", payload);
+
     try {
+      // Send PUT request to update store
       const response = await axios.put(
         `http://localhost:5175/api/v1/stores/updatestore/${selectedStore._id}`,
         payload
       );
+
+      // Update the store list with the new data
       setStores((prevStores) =>
         prevStores.map((store) =>
           store._id === selectedStore._id ? response.data : store
         )
       );
+
+      // Show success message
       setSuccess("Store updated successfully.");
       setTimeout(() => setSuccess(""), 3000);
       setIsEditing(false);
       setSelectedStore(null);
     } catch (error) {
       console.error("Error updating store:", error);
-      if (error.response && error.response.data.errors) {
-        const errors = error.response.data.errors;
-        const errorMessages = Object.keys(errors).map(
-          (field) => `${field}: ${errors[field]}`
-        );
-        setError(errorMessages.join(", "));
-      } else {
-        setError("Error updating store.");
-      }
+      setError("Error updating store.");
       setTimeout(() => setError(""), 3000);
     }
   };
@@ -283,10 +374,16 @@ const AllStore = () => {
   };
   // newly updte
   const handleDeleteSelectedStores = async () => {
-    const idsToDelete = selectedRows.map(index => stores[index]._id);
+    const idsToDelete = selectedRows.map((index) => stores[index]._id);
     try {
-      await Promise.all(idsToDelete.map(id => axios.delete(`http://localhost:5175/api/v1/stores/deletestore/${id}`)));
-      setStores(prevStores => prevStores.filter((_, index) => !selectedRows.includes(index)));
+      await Promise.all(
+        idsToDelete.map((id) =>
+          axios.delete(`http://localhost:5175/api/v1/stores/deletestore/${id}`)
+        )
+      );
+      setStores((prevStores) =>
+        prevStores.filter((_, index) => !selectedRows.includes(index))
+      );
       setSuccess("Selected stores deleted successfully.");
       setSelectedRows([]); // Clear selected rows after deletion
     } catch (error) {
@@ -295,7 +392,8 @@ const AllStore = () => {
   };
   // newlyUpdate
 
-  const rows = stores
+  const rows = filteredStores
+    // stores
     .filter((store) =>
       store.name.toLowerCase().includes(searchValue.toLowerCase())
     )
@@ -456,9 +554,10 @@ const AllStore = () => {
                     })
                   }
                   fullWidth
+                  error={!selectedStore.company}
+                  helperText={!selectedStore.company && "Company is required"}
                 />
               </Grid>
-
               <Grid item xs={12} sm={6}>
                 <TextField
                   label="Name"
@@ -467,6 +566,8 @@ const AllStore = () => {
                     setSelectedStore({ ...selectedStore, name: e.target.value })
                   }
                   fullWidth
+                  error={!selectedStore.name}
+                  helperText={!selectedStore.name && "Name is required"}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -480,6 +581,13 @@ const AllStore = () => {
                     })
                   }
                   fullWidth
+                  error={!selectedStore.email || !/\S+@\S+\.\S+/.test(selectedStore.email)} // Email validation
+                  helperText={
+                    !selectedStore.email
+                      ? "Email is required"
+                      : !/\S+@\S+\.\S+/.test(selectedStore.email) &&
+                        "Enter a valid email"
+                  } 
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -503,8 +611,11 @@ const AllStore = () => {
                     setSelectedStore({ ...selectedStore, fax: e.target.value })
                   }
                   fullWidth
+                  error={!selectedStore.fax}
+                  helperText={!selectedStore.fax && "fax no is required"}
                 />
               </Grid>
+              {/* adding */}
               <Grid item xs={12} sm={6}>
                 <TextField
                   label="Phone (Country Code)"
@@ -519,6 +630,8 @@ const AllStore = () => {
                     })
                   }
                   fullWidth
+                  error={!selectedStore.phone?.countryCode}
+                  helperText={!selectedStore.phone?.countryCode && "Country code is required"}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -535,6 +648,8 @@ const AllStore = () => {
                     })
                   }
                   fullWidth
+                  error={!selectedStore.phone?.number}
+            helperText={!selectedStore.phone?.number && "Phone number is required"}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -567,6 +682,7 @@ const AllStore = () => {
                     })
                   }
                   fullWidth
+                  
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -599,8 +715,11 @@ const AllStore = () => {
                     })
                   }
                   fullWidth
+                  error={!selectedStore.address?.postalCode}
+            helperText={!selectedStore.address?.postalCode && "Postal code is required"}
                 />
               </Grid>
+              {" "}
               <Grid item xs={12}>
                 <FormControl fullWidth>
                   <InputLabel>Category</InputLabel>
@@ -633,93 +752,87 @@ const AllStore = () => {
                     })
                   }
                   fullWidth
+             
                 />
               </Grid>
-
-              {[...Array(7)].map((_, i) => {
-                const day = daysOfWeek[i];
-                return (
-                  <Grid item xs={12} key={day}>
-                    <Stack
-                      direction="row"
-                      spacing={2}
-                      alignItems="center"
-                      justifyContent="space-between"
-                    >
-                      <Typography style={{ width: "100px" }}>{day}</Typography>
-                      <Switch
-                        checked={
-                          selectedStore.workingHours?.[day]?.isOpen || false
-                        }
-                        onChange={(e) => {
-                          const isOpen = e.target.checked;
-                          const updatedWorkingHours = {
-                            ...selectedStore.workingHours,
-                            [day]: {
-                              ...selectedStore.workingHours?.[day],
-                              isOpen,
-                            },
-                          };
-                          setSelectedStore({
-                            ...selectedStore,
-                            workingHours: updatedWorkingHours,
-                          });
-                        }}
-                      />
-                      {selectedStore.workingHours?.[day]?.isOpen && (
-                        <Stack direction="row" spacing={2}>
-                          <TextField
-                            label="Start Time"
-                            type="time"
-                            value={
-                              selectedStore.workingHours?.[day]?.start || ""
-                            }
-                            onChange={(event) => {
-                              const start = event.target.value;
-                              const updatedWorkingHours = {
-                                ...selectedStore.workingHours,
-                                [day]: {
-                                  ...selectedStore.workingHours?.[day],
-                                  start,
-                                },
-                              };
-                              setSelectedStore({
-                                ...selectedStore,
-                                workingHours: updatedWorkingHours,
-                              });
-                            }}
-                            InputLabelProps={{
-                              shrink: true,
-                            }}
-                          />
-                          <TextField
-                            label="End Time"
-                            type="time"
-                            value={selectedStore.workingHours?.[day]?.end || ""}
-                            onChange={(event) => {
-                              const end = event.target.value;
-                              const updatedWorkingHours = {
-                                ...selectedStore.workingHours,
-                                [day]: {
-                                  ...selectedStore.workingHours?.[day],
-                                  end,
-                                },
-                              };
-                              setSelectedStore({
-                                ...selectedStore,
-                                workingHours: updatedWorkingHours,
-                              });
-                            }}
-                            InputLabelProps={{
-                              shrink: true,
-                            }}
-                          />
-                        </Stack>
-                      )}
-                    </Stack>
-                  </Grid>
-                );
-              })}
+              {daysOfWeek.map((day) => (
+                <Grid item xs={12} key={day}>
+                  <Stack
+                    direction="row"
+                    spacing={2}
+                    alignItems="center"
+                    justifyContent="space-between"
+                  >
+                    <Typography style={{ width: "100px" }}>{day}</Typography>
+                    <Switch
+                      checked={selectedStore.workingHours[day]?.isOpen || false}
+                      onChange={(e) => {
+                        const isOpen = e.target.checked;
+                        const updatedWorkingHours = {
+                          ...selectedStore.workingHours,
+                          [day]: {
+                            ...selectedStore.workingHours[day],
+                            isOpen,
+                            start: isOpen
+                              ? selectedStore.workingHours[day]?.start ||
+                                "09:00" // Default start time
+                              : "", // Clear if closed
+                            end: isOpen
+                              ? selectedStore.workingHours[day]?.end || "18:00" // Default end time
+                              : "", // Clear if closed
+                          },
+                        };
+                        setSelectedStore({
+                          ...selectedStore,
+                          workingHours: updatedWorkingHours,
+                        });
+                      }}
+                    />
+                    {selectedStore.workingHours[day]?.isOpen && (
+                      <Stack direction="row" spacing={2}>
+                        <TextField
+                          label="Start Time"
+                          type="time"
+                          value={selectedStore.workingHours[day]?.start || ""}
+                          onChange={(event) => {
+                            const start = event.target.value;
+                            const updatedWorkingHours = {
+                              ...selectedStore.workingHours,
+                              [day]: {
+                                ...selectedStore.workingHours[day],
+                                start,
+                              },
+                            };
+                            setSelectedStore({
+                              ...selectedStore,
+                              workingHours: updatedWorkingHours,
+                            });
+                          }}
+                        />
+                        <TextField
+                          label="End Time"
+                          type="time"
+                          value={selectedStore.workingHours[day]?.end || ""}
+                          onChange={(event) => {
+                            const end = event.target.value;
+                            const updatedWorkingHours = {
+                              ...selectedStore.workingHours,
+                              [day]: {
+                                ...selectedStore.workingHours[day],
+                                end,
+                              },
+                            };
+                            setSelectedStore({
+                              ...selectedStore,
+                              workingHours: updatedWorkingHours,
+                            });
+                          }}
+                        />
+                      </Stack>
+                    )}
+                  </Stack>
+                </Grid>
+              ))}
             </Grid>
             <Stack direction="row" spacing={2} justifyContent="flex-end" mt={4}>
               <Button
@@ -733,6 +846,16 @@ const AllStore = () => {
                 variant="contained"
                 color="primary"
                 onClick={handleSaveEdit}
+                disabled={
+                  !selectedStore.company ||
+                  !selectedStore.name ||
+                  !selectedStore.email ||
+                  !/\S+@\S+\.\S+/.test(selectedStore.email) ||
+                  !selectedStore.phone?.countryCode ||
+                  !selectedStore.phone?.number ||
+                  !selectedStore.address.postalCode ||
+                  !selectedStore.fax
+                }
               >
                 Save
               </Button>

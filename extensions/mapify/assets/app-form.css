@@ -663,3 +663,29 @@ button:hover {
 
 
 /* flexi */
+/* bandge */
+  .status-summary {
+    background-color: #f4f4f4;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+  }
+
+  .status-badge {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+
+  .status-badge.open {
+    background-color: #4CAF50;
+    color: white;
+  }
+
+  .status-badge.closed {
+    background-color: #F44336;
+    color: white;
+  }
+  /* bangde */

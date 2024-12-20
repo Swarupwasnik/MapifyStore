@@ -20,8 +20,9 @@ import {
   getStoresByCategoryAndStatus,
   getStoresByDistanceAndStatus,
    getFilteredStores,
-  getStoresByFilters
-  ,
+  getStoresByFilters,
+  CheckEmail
+  ,getStoresByLocationAndStatus
 
   
 } from "../controllers/StoreController.js";
@@ -53,7 +54,8 @@ router.get("/category-status", getStoresByCategoryAndStatus);
 router.get("/by-distance", getStoresByDistanceAndStatus);
  router.get('/filter', getFilteredStores);
 router.get("/location-category-status", getStoresByFilters);
-
+router.get("/check-email",CheckEmail)
+router.get("/location-status", getStoresByLocationAndStatus);
 
 
 export default router;
