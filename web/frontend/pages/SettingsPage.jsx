@@ -28,7 +28,7 @@ const SettingsPage = () => {
   const [radius, setRadius] = useState("5");
   const [unit, setUnit] = useState("km");
   const [mapColor, setMapColor] = useState("#3498db");
-  const [center, setCenter] = useState([21.1458, 79.0882]); 
+  const [center, setCenter] = useState([21.14979, 79.08069]); 
   const [enableGeolocation, setEnableGeolocation] = useState(false);
   const [alert, setAlert] = useState({ message: "", type: "", open: false });
 
@@ -51,7 +51,7 @@ const SettingsPage = () => {
           setRadius(settings.radius || "5");
           setUnit(settings.unit || "km");
           setMapColor(settings.mapColor || "#3498db");
-          setCenter(settings.centerCoordinates || [21.1458, 79.0882]);
+          setCenter(settings.centerCoordinates || [21.14979, 79.08069]);
           setEnableGeolocation(settings.enableGeolocation || false);
         } else {
           console.error("Failed to fetch settings");

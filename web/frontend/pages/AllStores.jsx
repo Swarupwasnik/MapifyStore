@@ -25,6 +25,7 @@ import {
   Switch,
   MenuItem,
   FormControlLabel,
+  CircularProgress,
   Box,
   Grid,
   Typography,
@@ -49,7 +50,10 @@ const AllStore = () => {
   const [selectedStore, setSelectedStore] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
+  const [filteredStores, setFilteredStores] = useState([]);
+  const [isLoadingFilter, setIsLoadingFilter] = useState(false);
 
+  let debounceTimer;
   const debounceTimeout = 500;
 
   const handleSelect = (index) => {
@@ -76,7 +80,7 @@ const AllStore = () => {
     transform: "translate(-50%, -50%)",
     width: "80%",
     maxHeight: "80%",
-    bgcolor: "white",
+     bgcolor: "white",
     boxShadow: 24,
     p: 4,
     overflowY: "auto",
@@ -124,11 +128,7 @@ const AllStore = () => {
   };
 
   // added into it
-
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
+  // update new
   useEffect(() => {
     const fetchStores = async () => {
       setLoading(true);
@@ -141,7 +141,17 @@ const AllStore = () => {
             : "http://localhost:5175/api/v1/stores/stores?shop=quickstart-2770d800.myshopify.com";
 
         const response = await retryFetch(endpoint, { method: "GET" });
-        setStores(response.data);
+
+        // Sort stores by creation date (newest first)
+        const sortedStores = response.data.sort((a, b) => {
+          return new Date(b.createdAt) - new Date(a.createdAt);
+        });
+
+        setStores(sortedStores);
+        // new
+        setFilteredStores([]);
+        setSearchValue("");
+        // new
       } catch (err) {
         setError(
           err.response?.status === 429
@@ -150,6 +160,7 @@ const AllStore = () => {
         );
       } finally {
         setLoading(false);
+        setIsLoadingFilter(false);
       }
     };
 
@@ -166,33 +177,44 @@ const AllStore = () => {
       setError("Error fetching categories");
     }
   };
+  useEffect(() => {
+    if (isEditing) {
+      fetchCategories();
+    }
+  }, [isEditing]);
+  // newlyAdded
+
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearchValue(value);
 
-    // Debounce mechanism
-    clearTimeout(debounceTimer);
+    // Clear previous timeout
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+    }
+
+    // Set new timeout
     debounceTimer = setTimeout(() => {
-      fetchStores();
+      // Filtering logic moved here to ensure it runs after debounce
+      const filteredStores = stores.filter((store) => {
+        const lowerCaseSearchValue = value.toLowerCase();
+        return (
+          store.company.toLowerCase().includes(lowerCaseSearchValue) ||
+          store.name.toLowerCase().includes(lowerCaseSearchValue) ||
+          store.email.toLowerCase().includes(lowerCaseSearchValue) ||
+          store.address.city.toLowerCase().includes(lowerCaseSearchValue) ||
+          (store.category?.name &&
+            store.category.name.toLowerCase().includes(lowerCaseSearchValue))
+        );
+      });
+
+      // Update the filtered stores or trigger a re-render
+      setFilteredStores(filteredStores);
     }, debounceTimeout);
   };
-  // newlyadded
-  const filteredStores = stores.filter((store) => {
-    const lowerCaseSearchValue = searchValue.toLowerCase();
-    return (
-      store.company.toLowerCase().includes(lowerCaseSearchValue) ||
-      store.name.toLowerCase().includes(lowerCaseSearchValue) ||
-      store.email.toLowerCase().includes(lowerCaseSearchValue) ||
-      store.address.city.toLowerCase().includes(lowerCaseSearchValue) ||
-      (store.category?.name &&
-        store.category.name.toLowerCase().includes(lowerCaseSearchValue))
-    );
-  });
 
   // newlyadded
- 
-  
-  
+
   const handleTogglePublished = async (storeId, isPublished) => {
     setError("");
     setSuccess("");
@@ -218,28 +240,27 @@ const AllStore = () => {
 
   // addtocode
 
-
   // addtocode
   const handleSaveEdit = async () => {
     if (!selectedStore) return;
- // Validate phone number (exactly 10 digits)
- if (!/^\d{10}$/.test(selectedStore.phone?.number)) {
-  setError("Phone number must be exactly 10 digits.");
-  setTimeout(() => setError(""), 3000);
-  return;
-}
- // Validate fax number (exactly 4 digits)
- if (!/^\d{4}$/.test(selectedStore.fax || "")) {
-  setError("Fax number must be exactly 4 digits.");
-  setTimeout(() => setError(""), 3000);
-  return;
-}
-     // Validate country code (starts with '+' and 1-3 digits)
-  if (!/^\+\d{1,3}$/.test(selectedStore.phone?.countryCode || "")) {
-    setError("Country code must start with '+' followed by 1 to 3 digits.");
-    setTimeout(() => setError(""), 3000);
-    return;
-  }
+    // Validate phone number (exactly 10 digits)
+    if (!/^\d{10}$/.test(selectedStore.phone?.number)) {
+      setError("Phone number must be exactly 10 digits.");
+      setTimeout(() => setError(""), 3000);
+      return;
+    }
+    // Validate fax number (exactly 4 digits)
+    if (!/^\d{4}$/.test(selectedStore.fax || "")) {
+      setError("Fax number must be exactly 4 digits.");
+      setTimeout(() => setError(""), 3000);
+      return;
+    }
+    // Validate country code (starts with '+' and 1-3 digits)
+    if (!/^\+\d{1,3}$/.test(selectedStore.phone?.countryCode || "")) {
+      setError("Country code must start with '+' followed by 1 to 3 digits.");
+      setTimeout(() => setError(""), 3000);
+      return;
+    }
 
     // Validate postal code (exactly 10 digits)
     if (!/^\d{6}$/.test(selectedStore.address?.postalCode || "")) {
@@ -248,12 +269,12 @@ const AllStore = () => {
       return;
     }
 
-      // Validate additional information (maximum of 10 characters)
-  if (!/^.{1,150}$/.test(selectedStore.additional || "")) {
-    setError("Additional information must be 150 characters or less.");
-    setTimeout(() => setError(""), 3000);
-    return;
-  }
+    // Validate additional information (maximum of 10 characters)
+    if (!/^.{1,150}$/.test(selectedStore.additional || "")) {
+      setError("Additional information must be 150 characters or less.");
+      setTimeout(() => setError(""), 3000);
+      return;
+    }
     // Define required fields
     const requiredFields = [
       "company",
@@ -391,12 +412,9 @@ const AllStore = () => {
     }
   };
   // newlyUpdate
+  // updateOne
 
-  const rows = filteredStores
-    // stores
-    .filter((store) =>
-      store.name.toLowerCase().includes(searchValue.toLowerCase())
-    )
+  const rows = (filteredStores.length > 0 ? filteredStores : stores)
     .slice(page * rowsPerPage, (page + 1) * rowsPerPage)
     .map((store) => [
       store.company,
@@ -417,51 +435,515 @@ const AllStore = () => {
         <IconButton color="primary" onClick={() => handleEditStore(store)}>
           <EditIcon />
         </IconButton>
-
         <IconButton color="error" onClick={() => handleDeleteStore(store._id)}>
           <DeleteIcon />
         </IconButton>
       </Stack>,
     ]);
+  // updateOne
+  const renderContent = () => {
+    if (loading || isLoadingFilter) {
+      return (
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          height="300px"
+        >
+          <CircularProgress />
+        </Box>
+      );
+    }
+    if (stores.length === 0) {
+      return (
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          height="300px"
+        >
+          <Typography variant="h6" color="textSecondary">
+            No stores found
+          </Typography>
+        </Box>
+      );
+    }
 
+    return (
+      <div style={{ width: "80%", margin: "auto", marginTop: "20px" }}>
+        <Stack direction="row" spacing={2} justifyContent="space-between">
+          <TextField
+            label="Search Stores"
+            value={searchValue}
+            onChange={handleSearchChange}
+            // onChange={(e) => setSearchValue(e.target.value)}
+            variant="outlined"
+          />
+          <FormControl variant="outlined">
+            <InputLabel>Filter</InputLabel>
+            <Select
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              label="Filter"
+            >
+              {filterOptions.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <Button variant="contained" color="primary" onClick={handleAddStore}>
+            Add Store
+          </Button>
+          {/* newlyUpdate */}
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleDeleteSelectedStores}
+            disabled={selectedRows.length === 0}
+          >
+            Delete Selected
+          </Button>
+          {/* newlyUpdate */}
+        </Stack>
+        <Snackbar open={!!success} autoHideDuration={3000}>
+          <Alert severity="success">{success}</Alert>
+        </Snackbar>
+        <Snackbar open={!!error} autoHideDuration={3000}>
+          <Alert severity="error">{error}</Alert>
+        </Snackbar>
+
+        {/* {success && <Alert severity="success">{success}</Alert>}
+      {error && <Alert severity="error">{error}</Alert>} */}
+
+        <Card variant="outlined" style={{ marginTop: "20px" }}>
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Select</TableCell>
+                  <TableCell>Company</TableCell>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Email</TableCell>
+                  <TableCell>City</TableCell>
+                  <TableCell>Website</TableCell>
+                  <TableCell>Category</TableCell>
+                  <TableCell>Action</TableCell>
+                  <TableCell>Options</TableCell>
+                </TableRow>
+                {/* addnew */}
+
+                {/* addnew */}
+              </TableHead>
+              <TableBody>
+                {rows.map((row, index) => (
+                  <TableRow key={index}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedRows.includes(index)}
+                        onChange={() => handleSelect(index)}
+                      />
+                    </TableCell>
+                    {row.map((value, i) => (
+                      <TableCell key={i}>{value}</TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          <Pagination
+            count={Math.ceil(
+              (filteredStores.length || stores.length) / rowsPerPage
+            )}
+            page={page + 1}
+            onChange={(e, newPage) => setPage(newPage - 1)}
+            color="primary"
+            style={{ marginTop: "20px", textAlign: "center" }}
+          />
+          {/* <Pagination
+          count={Math.ceil(stores.length / rowsPerPage)}
+          page={page + 1}
+          onChange={(e, newPage) => setPage(newPage - 1)}
+          color="primary"
+          style={{ marginTop: "20px", textAlign: "center" }}
+        /> */}
+        </Card>
+        {isEditing && (
+          <Modal
+            open={isEditing}
+            onClose={() => setIsEditing(false)}
+            aria-labelledby="edit-store-title"
+          >
+            <Box
+              component="form"
+              sx={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                width: 600,
+                maxHeight: "90vh",
+                overflowY: "auto",
+                bgcolor: "background.paper",
+                boxShadow: 24,
+                p: 4,
+                borderRadius: 2,
+              }}
+            >
+              <Typography id="edit-store-title" variant="h6" mb={2}>
+                Edit Store
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Company"
+                    value={selectedStore.company || ""}
+                    onChange={(e) =>
+                      setSelectedStore({
+                        ...selectedStore,
+                        company: e.target.value,
+                      })
+                    }
+                    fullWidth
+                    error={!selectedStore.company}
+                    helperText={!selectedStore.company && "Company is required"}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Name"
+                    value={selectedStore.name || ""}
+                    onChange={(e) =>
+                      setSelectedStore({
+                        ...selectedStore,
+                        name: e.target.value,
+                      })
+                    }
+                    fullWidth
+                    error={!selectedStore.name}
+                    helperText={!selectedStore.name && "Name is required"}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Email"
+                    value={selectedStore.email || ""}
+                    onChange={(e) =>
+                      setSelectedStore({
+                        ...selectedStore,
+                        email: e.target.value,
+                      })
+                    }
+                    fullWidth
+                    error={
+                      !selectedStore.email ||
+                      !/\S+@\S+\.\S+/.test(selectedStore.email)
+                    } // Email validation
+                    helperText={
+                      !selectedStore.email
+                        ? "Email is required"
+                        : !/\S+@\S+\.\S+/.test(selectedStore.email) &&
+                          "Enter a valid email"
+                    }
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Website"
+                    value={selectedStore.websiteURL || ""}
+                    onChange={(e) =>
+                      setSelectedStore({
+                        ...selectedStore,
+                        websiteURL: e.target.value,
+                      })
+                    }
+                    fullWidth
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Fax"
+                    value={selectedStore.fax || ""}
+                    onChange={(e) =>
+                      setSelectedStore({
+                        ...selectedStore,
+                        fax: e.target.value,
+                      })
+                    }
+                    fullWidth
+                    error={!selectedStore.fax}
+                    helperText={!selectedStore.fax && "fax no is required"}
+                  />
+                </Grid>
+                {/* adding */}
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Phone (Country Code)"
+                    value={selectedStore.phone?.countryCode || ""}
+                    onChange={(e) =>
+                      setSelectedStore({
+                        ...selectedStore,
+                        phone: {
+                          ...selectedStore.phone,
+                          countryCode: e.target.value,
+                        },
+                      })
+                    }
+                    fullWidth
+                    error={!selectedStore.phone?.countryCode}
+                    helperText={
+                      !selectedStore.phone?.countryCode &&
+                      "Country code is required"
+                    }
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Phone (Number)"
+                    value={selectedStore.phone?.number || ""}
+                    onChange={(e) =>
+                      setSelectedStore({
+                        ...selectedStore,
+                        phone: {
+                          ...selectedStore.phone,
+                          number: e.target.value,
+                        },
+                      })
+                    }
+                    fullWidth
+                    error={!selectedStore.phone?.number}
+                    helperText={
+                      !selectedStore.phone?.number && "Phone number is required"
+                    }
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Street"
+                    value={selectedStore.address?.street || ""}
+                    onChange={(e) =>
+                      setSelectedStore({
+                        ...selectedStore,
+                        address: {
+                          ...selectedStore.address,
+                          street: e.target.value,
+                        },
+                      })
+                    }
+                    fullWidth
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="City"
+                    value={selectedStore.address?.city || ""}
+                    onChange={(e) =>
+                      setSelectedStore({
+                        ...selectedStore,
+                        address: {
+                          ...selectedStore.address,
+                          city: e.target.value,
+                        },
+                      })
+                    }
+                    fullWidth
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="State"
+                    value={selectedStore.address?.state || ""}
+                    onChange={(e) =>
+                      setSelectedStore({
+                        ...selectedStore,
+                        address: {
+                          ...selectedStore.address,
+                          state: e.target.value,
+                        },
+                      })
+                    }
+                    fullWidth
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Postal Code"
+                    value={selectedStore.address?.postalCode || ""}
+                    onChange={(e) =>
+                      setSelectedStore({
+                        ...selectedStore,
+                        address: {
+                          ...selectedStore.address,
+                          postalCode: e.target.value,
+                        },
+                      })
+                    }
+                    fullWidth
+                    error={!selectedStore.address?.postalCode}
+                    helperText={
+                      !selectedStore.address?.postalCode &&
+                      "Postal code is required"
+                    }
+                  />
+                </Grid>{" "}
+                <Grid item xs={12}>
+                  <FormControl fullWidth>
+                    <InputLabel>Category</InputLabel>
+                    <Select
+                      value={selectedStore.category?._id || ""}
+                      onChange={(e) =>
+                        setSelectedStore({
+                          ...selectedStore,
+                          category: { _id: e.target.value },
+                        })
+                      }
+                    >
+                      {categories.map((category) => (
+                        <MenuItem key={category._id} value={category._id}>
+                          {category.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    label="Additional Information"
+                    multiline
+                    value={selectedStore.additional || ""}
+                    onChange={(e) =>
+                      setSelectedStore({
+                        ...selectedStore,
+                        additional: e.target.value,
+                      })
+                    }
+                    fullWidth
+                  />
+                </Grid>
+                {daysOfWeek.map((day) => (
+                  <Grid item xs={12} key={day}>
+                    <Stack
+                      direction="row"
+                      spacing={2}
+                      alignItems="center"
+                      justifyContent="space-between"
+                    >
+                      <Typography style={{ width: "100px" }}>{day}</Typography>
+                      <Switch
+                        checked={
+                          selectedStore.workingHours[day]?.isOpen || false
+                        }
+                        onChange={(e) => {
+                          const isOpen = e.target.checked;
+                          const updatedWorkingHours = {
+                            ...selectedStore.workingHours,
+                            [day]: {
+                              ...selectedStore.workingHours[day],
+                              isOpen,
+                              start: isOpen
+                                ? selectedStore.workingHours[day]?.start ||
+                                  "09:00" // Default start time
+                                : "", // Clear if closed
+                              end: isOpen
+                                ? selectedStore.workingHours[day]?.end ||
+                                  "18:00" // Default end time
+                                : "", // Clear if closed
+                            },
+                          };
+                          setSelectedStore({
+                            ...selectedStore,
+                            workingHours: updatedWorkingHours,
+                          });
+                        }}
+                      />
+                      {selectedStore.workingHours[day]?.isOpen && (
+                        <Stack direction="row" spacing={2}>
+                          <TextField
+                            label="Start Time"
+                            type="time"
+                            value={selectedStore.workingHours[day]?.start || ""}
+                            onChange={(event) => {
+                              const start = event.target.value;
+                              const updatedWorkingHours = {
+                                ...selectedStore.workingHours,
+                                [day]: {
+                                  ...selectedStore.workingHours[day],
+                                  start,
+                                },
+                              };
+                              setSelectedStore({
+                                ...selectedStore,
+                                workingHours: updatedWorkingHours,
+                              });
+                            }}
+                          />
+                          <TextField
+                            label="End Time"
+                            type="time"
+                            value={selectedStore.workingHours[day]?.end || ""}
+                            onChange={(event) => {
+                              const end = event.target.value;
+                              const updatedWorkingHours = {
+                                ...selectedStore.workingHours,
+                                [day]: {
+                                  ...selectedStore.workingHours[day],
+                                  end,
+                                },
+                              };
+                              setSelectedStore({
+                                ...selectedStore,
+                                workingHours: updatedWorkingHours,
+                              });
+                            }}
+                          />
+                        </Stack>
+                      )}
+                    </Stack>
+                  </Grid>
+                ))}
+              </Grid>
+              <Stack
+                direction="row"
+                spacing={2}
+                justifyContent="flex-end"
+                mt={4}
+              >
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  onClick={() => setIsEditing(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleSaveEdit}
+                  disabled={
+                    !selectedStore.company ||
+                    !selectedStore.name ||
+                    !selectedStore.email ||
+                    !/\S+@\S+\.\S+/.test(selectedStore.email) ||
+                    !selectedStore.phone?.countryCode ||
+                    !selectedStore.phone?.number ||
+                    !selectedStore.address.postalCode ||
+                    !selectedStore.fax
+                  }
+                >
+                  Save
+                </Button>
+              </Stack>
+            </Box>
+          </Modal>
+        )}
+      </div>
+    );
+  };
   return (
     <div style={{ width: "80%", margin: "auto", marginTop: "20px" }}>
-      <Stack direction="row" spacing={2} justifyContent="space-between">
-        <TextField
-          label="Search Stores"
-          value={searchValue}
-          onChange={handleSearchChange}
-          // onChange={(e) => setSearchValue(e.target.value)}
-          variant="outlined"
-        />
-        <FormControl variant="outlined">
-          <InputLabel>Filter</InputLabel>
-          <Select
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            label="Filter"
-          >
-            {filterOptions.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <Button variant="contained" color="primary" onClick={handleAddStore}>
-          Add Store
-        </Button>
-        {/* newlyUpdate */}
-        <Button
-          variant="contained"
-          color="error"
-          onClick={handleDeleteSelectedStores}
-          disabled={selectedRows.length === 0}
-        >
-          Delete Selected
-        </Button>
-        {/* newlyUpdate */}
-      </Stack>
       <Snackbar open={!!success} autoHideDuration={3000}>
         <Alert severity="success">{success}</Alert>
       </Snackbar>
@@ -469,400 +951,9 @@ const AllStore = () => {
         <Alert severity="error">{error}</Alert>
       </Snackbar>
 
-      {/* {success && <Alert severity="success">{success}</Alert>}
-      {error && <Alert severity="error">{error}</Alert>} */}
-
       <Card variant="outlined" style={{ marginTop: "20px" }}>
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Select</TableCell>
-                <TableCell>Company</TableCell>
-                <TableCell>Name</TableCell>
-                <TableCell>Email</TableCell>
-                <TableCell>City</TableCell>
-                <TableCell>Website</TableCell>
-                <TableCell>Category</TableCell>
-                <TableCell>Action</TableCell>
-                <TableCell>Options</TableCell>
-              </TableRow>
-              {/* addnew */}
-
-              {/* addnew */}
-            </TableHead>
-            <TableBody>
-              {rows.map((row, index) => (
-                <TableRow key={index}>
-                  <TableCell>
-                    <Checkbox
-                      checked={selectedRows.includes(index)}
-                      onChange={() => handleSelect(index)}
-                    />
-                  </TableCell>
-                  {row.map((value, i) => (
-                    <TableCell key={i}>{value}</TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-
-        <Pagination
-          count={Math.ceil(stores.length / rowsPerPage)}
-          page={page + 1}
-          onChange={(e, newPage) => setPage(newPage - 1)}
-          color="primary"
-          style={{ marginTop: "20px", textAlign: "center" }}
-        />
+        {renderContent()}
       </Card>
-      {isEditing && (
-        <Modal
-          open={isEditing}
-          onClose={() => setIsEditing(false)}
-          aria-labelledby="edit-store-title"
-        >
-          <Box
-            component="form"
-            sx={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              width: 600,
-              maxHeight: "90vh",
-              overflowY: "auto",
-              bgcolor: "background.paper",
-              boxShadow: 24,
-              p: 4,
-              borderRadius: 2,
-            }}
-          >
-            <Typography id="edit-store-title" variant="h6" mb={2}>
-              Edit Store
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Company"
-                  value={selectedStore.company || ""}
-                  onChange={(e) =>
-                    setSelectedStore({
-                      ...selectedStore,
-                      company: e.target.value,
-                    })
-                  }
-                  fullWidth
-                  error={!selectedStore.company}
-                  helperText={!selectedStore.company && "Company is required"}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Name"
-                  value={selectedStore.name || ""}
-                  onChange={(e) =>
-                    setSelectedStore({ ...selectedStore, name: e.target.value })
-                  }
-                  fullWidth
-                  error={!selectedStore.name}
-                  helperText={!selectedStore.name && "Name is required"}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Email"
-                  value={selectedStore.email || ""}
-                  onChange={(e) =>
-                    setSelectedStore({
-                      ...selectedStore,
-                      email: e.target.value,
-                    })
-                  }
-                  fullWidth
-                  error={!selectedStore.email || !/\S+@\S+\.\S+/.test(selectedStore.email)} // Email validation
-                  helperText={
-                    !selectedStore.email
-                      ? "Email is required"
-                      : !/\S+@\S+\.\S+/.test(selectedStore.email) &&
-                        "Enter a valid email"
-                  } 
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Website"
-                  value={selectedStore.websiteURL || ""}
-                  onChange={(e) =>
-                    setSelectedStore({
-                      ...selectedStore,
-                      websiteURL: e.target.value,
-                    })
-                  }
-                  fullWidth
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Fax"
-                  value={selectedStore.fax || ""}
-                  onChange={(e) =>
-                    setSelectedStore({ ...selectedStore, fax: e.target.value })
-                  }
-                  fullWidth
-                  error={!selectedStore.fax}
-                  helperText={!selectedStore.fax && "fax no is required"}
-                />
-              </Grid>
-              {/* adding */}
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Phone (Country Code)"
-                  value={selectedStore.phone?.countryCode || ""}
-                  onChange={(e) =>
-                    setSelectedStore({
-                      ...selectedStore,
-                      phone: {
-                        ...selectedStore.phone,
-                        countryCode: e.target.value,
-                      },
-                    })
-                  }
-                  fullWidth
-                  error={!selectedStore.phone?.countryCode}
-                  helperText={!selectedStore.phone?.countryCode && "Country code is required"}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Phone (Number)"
-                  value={selectedStore.phone?.number || ""}
-                  onChange={(e) =>
-                    setSelectedStore({
-                      ...selectedStore,
-                      phone: {
-                        ...selectedStore.phone,
-                        number: e.target.value,
-                      },
-                    })
-                  }
-                  fullWidth
-                  error={!selectedStore.phone?.number}
-            helperText={!selectedStore.phone?.number && "Phone number is required"}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Street"
-                  value={selectedStore.address?.street || ""}
-                  onChange={(e) =>
-                    setSelectedStore({
-                      ...selectedStore,
-                      address: {
-                        ...selectedStore.address,
-                        street: e.target.value,
-                      },
-                    })
-                  }
-                  fullWidth
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="City"
-                  value={selectedStore.address?.city || ""}
-                  onChange={(e) =>
-                    setSelectedStore({
-                      ...selectedStore,
-                      address: {
-                        ...selectedStore.address,
-                        city: e.target.value,
-                      },
-                    })
-                  }
-                  fullWidth
-                  
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="State"
-                  value={selectedStore.address?.state || ""}
-                  onChange={(e) =>
-                    setSelectedStore({
-                      ...selectedStore,
-                      address: {
-                        ...selectedStore.address,
-                        state: e.target.value,
-                      },
-                    })
-                  }
-                  fullWidth
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Postal Code"
-                  value={selectedStore.address?.postalCode || ""}
-                  onChange={(e) =>
-                    setSelectedStore({
-                      ...selectedStore,
-                      address: {
-                        ...selectedStore.address,
-                        postalCode: e.target.value,
-                      },
-                    })
-                  }
-                  fullWidth
-                  error={!selectedStore.address?.postalCode}
-            helperText={!selectedStore.address?.postalCode && "Postal code is required"}
-                />
-              </Grid>
-              {" "}
-              <Grid item xs={12}>
-                <FormControl fullWidth>
-                  <InputLabel>Category</InputLabel>
-                  <Select
-                    value={selectedStore.category?._id || ""}
-                    onChange={(e) =>
-                      setSelectedStore({
-                        ...selectedStore,
-                        category: { _id: e.target.value },
-                      })
-                    }
-                  >
-                    {categories.map((category) => (
-                      <MenuItem key={category._id} value={category._id}>
-                        {category.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  label="Additional Information"
-                  multiline
-                  value={selectedStore.additional || ""}
-                  onChange={(e) =>
-                    setSelectedStore({
-                      ...selectedStore,
-                      additional: e.target.value,
-                    })
-                  }
-                  fullWidth
-             
-                />
-              </Grid>
-              {daysOfWeek.map((day) => (
-                <Grid item xs={12} key={day}>
-                  <Stack
-                    direction="row"
-                    spacing={2}
-                    alignItems="center"
-                    justifyContent="space-between"
-                  >
-                    <Typography style={{ width: "100px" }}>{day}</Typography>
-                    <Switch
-                      checked={selectedStore.workingHours[day]?.isOpen || false}
-                      onChange={(e) => {
-                        const isOpen = e.target.checked;
-                        const updatedWorkingHours = {
-                          ...selectedStore.workingHours,
-                          [day]: {
-                            ...selectedStore.workingHours[day],
-                            isOpen,
-                            start: isOpen
-                              ? selectedStore.workingHours[day]?.start ||
-                                "09:00" // Default start time
-                              : "", // Clear if closed
-                            end: isOpen
-                              ? selectedStore.workingHours[day]?.end || "18:00" // Default end time
-                              : "", // Clear if closed
-                          },
-                        };
-                        setSelectedStore({
-                          ...selectedStore,
-                          workingHours: updatedWorkingHours,
-                        });
-                      }}
-                    />
-                    {selectedStore.workingHours[day]?.isOpen && (
-                      <Stack direction="row" spacing={2}>
-                        <TextField
-                          label="Start Time"
-                          type="time"
-                          value={selectedStore.workingHours[day]?.start || ""}
-                          onChange={(event) => {
-                            const start = event.target.value;
-                            const updatedWorkingHours = {
-                              ...selectedStore.workingHours,
-                              [day]: {
-                                ...selectedStore.workingHours[day],
-                                start,
-                              },
-                            };
-                            setSelectedStore({
-                              ...selectedStore,
-                              workingHours: updatedWorkingHours,
-                            });
-                          }}
-                        />
-                        <TextField
-                          label="End Time"
-                          type="time"
-                          value={selectedStore.workingHours[day]?.end || ""}
-                          onChange={(event) => {
-                            const end = event.target.value;
-                            const updatedWorkingHours = {
-                              ...selectedStore.workingHours,
-                              [day]: {
-                                ...selectedStore.workingHours[day],
-                                end,
-                              },
-                            };
-                            setSelectedStore({
-                              ...selectedStore,
-                              workingHours: updatedWorkingHours,
-                            });
-                          }}
-                        />
-                      </Stack>
-                    )}
-                  </Stack>
-                </Grid>
-              ))}
-            </Grid>
-            <Stack direction="row" spacing={2} justifyContent="flex-end" mt={4}>
-              <Button
-                variant="outlined"
-                color="secondary"
-                onClick={() => setIsEditing(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleSaveEdit}
-                disabled={
-                  !selectedStore.company ||
-                  !selectedStore.name ||
-                  !selectedStore.email ||
-                  !/\S+@\S+\.\S+/.test(selectedStore.email) ||
-                  !selectedStore.phone?.countryCode ||
-                  !selectedStore.phone?.number ||
-                  !selectedStore.address.postalCode ||
-                  !selectedStore.fax
-                }
-              >
-                Save
-              </Button>
-            </Stack>
-          </Box>
-        </Modal>
-      )}
     </div>
   );
 };

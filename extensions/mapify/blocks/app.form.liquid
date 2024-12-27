@@ -27,6 +27,7 @@
   ]
 }
 {% endschema %}
+
 <div class="app-form">
 
   <div class="store-list-wrap">
@@ -111,6 +112,7 @@
 </div>
 
 
+
         <div class="store-list-map">
 
           <div class="store-list">
@@ -119,7 +121,9 @@
             <ul id="storeList"></ul>
           </div>
 
-          <div class="store-list-placeholder" id="map" style="height: 400px;" style="background-color: {{ settings.map_color }};"></div>
+          <div class="store-list-placeholder" id="map" style="height: 400px;" 
+          style="background-color: {{ settings.map_color }};"
+          ></div>
           <!-- Add this in your modal or route details section -->
 
   {%comment%}
@@ -157,15 +161,4 @@ Newly added
 
 <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 <script src="{{ 'app-form.js' | asset_url }}" defer></script>
-<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
 <link rel="stylesheet" href="{{ 'app-form.css' | asset_url }}">
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
-<script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
-
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>

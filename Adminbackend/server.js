@@ -18,7 +18,7 @@ import { createProxyMiddleware } from "http-proxy-middleware";
 import locationRoutes from "./routes/locationRoutes.js"
 import SettingRoutes from "./routes/SettingRoutes.js";
 import initializeDefaultSettings from "./seed/initializeDefaultSettings.js";
-
+// import AuthRoutes from "./routes/AuthRoutes.js";
 dotenv.config();
 console.log("Environment variables loaded:", process.env);
 
@@ -148,6 +148,7 @@ app.use("/api/v1/category", categoryRoutes);
 app.use("/api/v1/stores", StoreRoutes);
 app.use('/api/v1/stores', locationRoutes);
 app.use('/api/v1/settings',SettingRoutes);
+//  app.use("/api/v1/auth",AuthRoutes);
 // WebSocket connection handling
 wss.on("connection", (ws) => {
   console.log("WebSocket connection established");

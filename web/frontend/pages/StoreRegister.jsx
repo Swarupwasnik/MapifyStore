@@ -216,6 +216,7 @@ const StoreRegister = () => {
     const newErrors = {};
     if (!formData.company) newErrors.company = "Company is required";
     if (!formData.name) newErrors.name = "Name is required";
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!formData.email) {
       newErrors.email = "Email is required";
@@ -236,6 +237,8 @@ const StoreRegister = () => {
     } else if (!phoneNumberRegex.test(formData.phone.number)) {
       newErrors.phoneNumber = "Phone number must be 10 digits";
     }
+   
+  
     if (!formData.address.street) newErrors.street = "Street is required";
     if (!formData.address.city) newErrors.city = "City is required";
     if (!formData.address.state) newErrors.state = "State is required";
@@ -245,6 +248,7 @@ const StoreRegister = () => {
     } else if (!postalCodeRegex.test(formData.address.postalCode)) {
       newErrors.postalCode = "Postal code must be 6 digits";
     }
+   
     if (!formData.address.country) newErrors.country = "Country is required";
     if (!formData.agreeToTerms)
       newErrors.agreeToTerms = "You must agree to the terms and conditions";
@@ -450,11 +454,13 @@ const StoreRegister = () => {
                   )}
                   <input
                     type="text"
-                    placeholder="Fax"
+                    placeholder="Fax Number"
                     name="fax"
                     value={formData.fax}
                     onChange={handleChange}
                   />
+                  
+                   
                   <input
                     type="email"
                     placeholder="Email"

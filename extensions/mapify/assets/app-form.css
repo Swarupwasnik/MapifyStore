@@ -309,8 +309,8 @@ button.cancel {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
-  color: #888;
+  font-size: 10px;
+  color: #88
 } 
 .deatis-btn-main {
   width: 100%;
@@ -450,52 +450,52 @@ border-radius: 34px;
 .slider.round:before {
 border-radius: 50%;
 }
-
 /* scrollable Card */
+
 .store-list {
-  max-height: 400px; /* Set the maximum height for the scrollable area */
-  overflow-y: auto; /* Enable vertical scrolling */
+max-height: 400px; /* Set the maximum height for the scrollable area */
+overflow-y: auto; /* Enable vertical scrolling */
 }
 
 .store-card {
-  margin: 10px 0;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  background-color: #f9f9f9;
+margin: 10px 0;
+padding: 10px;
+border: 1px solid #ccc;
+border-radius: 5px;
+background-color: #f9f9f9;
 }
 
-/* Scrollable card/
-/* Marker card */
+
 .map-popup-box {
-  width: 200px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  font-family: Arial, sans-serif;
-  overflow: hidden;
-  text-align: center;
+width: 250px;
+background-color: #f9f9f9;
+border-radius: 8px;
+box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+font-family: Arial, sans-serif;
+overflow: hidden;
+text-align: center;
 }        
 .map-box-icon {
-  background-color: #e0e0e0;
-  padding: 20px;
+background-color: #e0e0e0;
+padding: 20px;
 }
 .map-box-icon img {
-  width: 40px;
-  height: 40px;
+width: 40px;
+height: 40px;
 }
 .map-popup-box-content {
-  padding: 20px;
+padding: 20px;
 text-align:left;
 }
 .map-popup-box-title {
-  font-size: 20px;
-  font-weight: bold;
-  margin: 10px 0;
+font-size: 10px;
+font-weight: bold;
+margin: 10px 0;
 }       
 .map-popup-box-info {
-  color: #555;
-  margin-bottom: 10px;
+color: #555;
+margin-bottom: 10px;
+font-size:"10px"
 }        
 .map-popup-box-info-buttons {
 display: flex;    
@@ -503,189 +503,95 @@ gap: 10px;
 padding: 0px 5px;
 }
 .map-popup-box-info-buttons button {
-  background-color: #007bff;
-  color: white;
-  padding: 10px 0;
-  font-size: 14px;
-  border: none;
-  cursor: pointer;
-  width: 100%;
-  border-top: 1px solid #ddd;
-  outline: none;
+background-color: #007bff;
+color: white;
+padding: 10px 0;
+font-size: 10px;
+border: none;
+cursor: pointer;
+width: 100%;
+border-top: 1px solid #ddd;
+outline: none;
 } 
 /* Marker Card */
 /* print card */
 /* Flexbox for alignment */
 
 .store-list-controls{
-  display: flex;
-  width:300px ;
-  
+display: flex;
+width:300px ;
+
 }
 .direct{
-  flex-direction: row;
-  justify-content: space-around;
+flex-direction: row;
+justify-content: space-around;
 }
 
-/* printcard */
 
-/* Zoomeffect */
-.custom-marker-icon .marker-pin {
-  width: 30px;
-  height: 42px;
-  background: #3498db;
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  border-radius: 50% 50% 50% 0;
-  border: 3px solid #fff;
-  box-shadow: 0 0 10px rgba(0,0,0,0.2);
-}
 
-.selected-store-popup {
-  border: 2px solid #2ecc71;
-  box-shadow: 0 0 15px rgba(46, 204, 113, 0.5);
-  animation: pulse 1s infinite;
-}
 
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
-}
-/* Model */
-/* Modal styles */
-.modal {
-  position: fixed;
-  z-index: 1000;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  overflow: auto;
-  background-color: rgba(0,0,0,0.4);
-}
-
-.modal-content {
-  background-color: #fefefe;
-  margin: 15% auto;
-  padding: 20px;
-  border: 1px solid #888;
-  width: 80%;
-  max-width: 500px;
-}
-
-.close-button {
-  color: #aaa;
-  float: right;
-  font-size: 28px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-/* newly added code */
-.start-marker div, .end-marker div {
-  transition: transform 0.2s ease-in-out;
-}
-
-.start-marker div:hover, .end-marker div:hover {
-  transform: scale(1.2);
-}
-/* newly added code */
-/* Model */
-
-/* flexi */
-/* .flexi {
-  display: flex;
-  align-items: center;
-  gap: 10px; 
-}
-
-.flexi label {
-  font-size: 14px; 
-  margin-right: 5px; 
-}
-
-.flexi select {
-  padding: 5px;
-  font-size: 14px;
-}
-
-.flexi button {
-  padding: 5px 10px;
-  font-size: 14px;
-  background-color: #007bff; 
-  color: white; 
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.flexi button:hover {
-  background-color: #0056b3; 
-} */
 
 .flexi {
-  display: flex;
-  align-items: center; 
-  gap: 10px;
+display: flex;
+align-items: center; 
+gap: 10px;
 }
 
 .category-container {
-  display: flex;
-  flex-direction: column;
+display: flex;
+flex-direction: column;
 }
 
 .category-container label {
-  margin-bottom: 5px;
-  font-size: 14px; 
+margin-bottom: 5px;
+font-size: 14px; 
 }
 
 select {
-  padding: 5px;
-  font-size: 14px;
+padding: 5px;
+font-size: 14px;
 }
 
 button {
-  padding: 5px 10px;
-  font-size: 14px;
-  background-color: #007bff; 
-  color: white; 
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+padding: 5px 10px;
+font-size: 14px;
+background-color: #007bff; 
+color: white; 
+border: none;
+border-radius: 4px;
+cursor: pointer;
 }
 
 button:hover {
-  background-color: #0056b3; 
+background-color: #0056b3; 
 }
 
 
 /* flexi */
 /* bandge */
-  .status-summary {
-    background-color: #f4f4f4;
-    padding: 10px;
-    margin-bottom: 10px;
-    border-radius: 5px;
-  }
+.status-summary {
+  background-color: #f4f4f4;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+}
 
-  .status-badge {
-    display: inline-block;
-    padding: 5px 10px;
-    border-radius: 3px;
-    font-weight: bold;
-    margin-bottom: 10px;
-  }
+.status-badge {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 3px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
 
-  .status-badge.open {
-    background-color: #4CAF50;
-    color: white;
-  }
+.status-badge.open {
+  background-color: #4CAF50;
+  color: white;
+}
 
-  .status-badge.closed {
-    background-color: #F44336;
-    color: white;
-  }
-  /* bangde */
+.status-badge.closed {
+  background-color: #F44336;
+  color: white;
+}
+/* flexi */
+/* bandge */

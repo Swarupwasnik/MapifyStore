@@ -1,66 +1,32 @@
 {% schema %}
 {
-  "name": "Store Locator Settings",
+  "name": "App Registration",
   "target": "section",
-   "class": "app-dashboard-form",
+  "class": "app-dashboard-form",
   "stylesheet": "app-form.css",
   "javascript": "app-form.js",
   "settings": [
     {
       "type": "text",
+      "id": "form_title",
+      "label": "App Form Title",
+      "default": "App Registration"
+    },
+   {
+      "type": "text",
       "id": "company_name",
       "label": "Company Name",
-      "default": "My Store"
-    },
-    {
-      "type": "text",
-      "id": "default_location",
-      "label": "Default Map Center",
-      "default": "23.0225, 72.5714"
-    },
-    {
-      "type": "range",
-      "id": "default_zoom",
-      "label": "Default Zoom Level",
-      "min": 1,
-      "max": 20,
-      "step": 1,
-      "default": 10
-    },
-    {
-      "type": "text",
-      "id": "default_radius",
-      "label": "Default Search Radius (km)",
-      "default": "20"
+      "default": "Your Company"
     },
     {
       "type": "color",
-      "id": "map_background_color",
+      "id": "map_color",
       "label": "Map Background Color",
-      "default": "#f0f0f0"
-    },
-    {
-      "type": "checkbox",
-      "id": "enable_geolocation",
-      "label": "Enable Geolocation",
-      "default": true
+      "default": "#7b7bb0"
     }
   ]
 }
 {% endschema %}
-
-
-<script>
-  // Map Configuration Object
-  window.MapSettings = {
-    companyName: {{ section.settings.company_name | json }},
-    defaultLocation: {{ section.settings.default_location | split: ',' | json }},
-    defaultZoom: {{ section.settings.default_zoom }},
-    defaultRadius: {{ section.settings.default_radius }},
-    mapBackgroundColor: {{ section.settings.map_background_color | json }},
-    enableGeolocation: {{ section.settings.enable_geolocation }}
-  };
-</script>
 
 <div class="app-form">
 
@@ -69,7 +35,7 @@
       <div class="store-list-container cd-store-locator">
         <div class="store-list-main">
           <div class="sl-store-left">
-            <h2>Store on the Map</h2>
+            <h2 id="company-name">{{ settings.company_name }}</h2>
           </div>
           <div class="sl-store-right">
             <!-- <button class="st-list-btn-setting">Store locator setting</button> -->
@@ -90,7 +56,7 @@
               <option value="">Select category</option>
             </select>
             </div>
-            <button id="searchButton">Search</button>
+            <button id="searchButton">Location-based category search</button>
 
           </div>
           <div class="slider-container distnace-flex">
@@ -146,6 +112,7 @@
 </div>
 
 
+
         <div class="store-list-map">
 
           <div class="store-list">
@@ -154,7 +121,7 @@
             <ul id="storeList"></ul>
           </div>
 
-          <div class="store-list-placeholder" id="map"  style="height: 400px; background-color: {{ section.settings.map_background_color }};">></div>
+          <div class="store-list-placeholder" id="map" style="height: 400px;" style="background-color: {{ settings.map_color }};"></div>
           <!-- Add this in your modal or route details section -->
 
   {%comment%}
@@ -204,8 +171,3 @@ Newly added
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
-
-
-
-
-

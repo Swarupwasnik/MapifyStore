@@ -3,6 +3,46 @@ let radiusCircle;
 let mapInitialized = false;
 
 document.addEventListener("DOMContentLoaded", function () {
+  //  settingupdate
+
+  async function fetchUpdatedSettings() {
+    try {
+      const response = await fetch(
+        "http://localhost:5175/api/v1/settings/settings1"
+      );
+      if (response.ok) {
+        const settings = await response.json();
+
+        document.getElementById("company-name").textContent =
+          settings.companyName;
+        document.getElementById("map").style.backgroundColor =
+          settings.mapColor;
+
+        map.setView(settings.centerCoordinates, settings.zoomLevel);
+        const marker = L.marker(settings.centerCoordinates).addTo(map);
+        marker.bindPopup(settings.companyName).openPopup();
+        updateRadiusCircle(settings.radius, settings.centerCoordinates);
+      }
+    } catch (error) {
+      console.error("Error fetching updated settings:", error);
+    }
+  }
+
+  function updateRadiusCircle(radius, centerCoordinates) {
+    if (radiusCircle) {
+      map.removeLayer(radiusCircle);
+    }
+
+    radiusCircle = L.circle(centerCoordinates, {
+      color: "blue",
+      fillColor: "#24c62c",
+      fillOpacity: 0.5,
+      radius: radius * 1609.34,
+    }).addTo(map);
+  }
+  fetchUpdatedSettings();
+  // settingupdate
+
   const mapContainer = document.getElementById("map");
 
   if (mapContainer._leaflet_id) {
@@ -233,46 +273,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   //statusSwitch newlyAdded
 
-  //  settingupdate
-
-  async function fetchUpdatedSettings() {
-    try {
-      const response = await fetch(
-        "http://localhost:5175/api/v1/settings/settings1"
-      );
-      if (response.ok) {
-        const settings = await response.json();
-
-        document.getElementById("company-name").textContent =
-          settings.companyName;
-        document.getElementById("map").style.backgroundColor =
-          settings.mapColor;
-
-        map.setView(settings.centerCoordinates, settings.zoomLevel);
-        const marker = L.marker(settings.centerCoordinates).addTo(map);
-        marker.bindPopup(settings.companyName).openPopup();
-        updateRadiusCircle(settings.radius, settings.centerCoordinates);
-      }
-    } catch (error) {
-      console.error("Error fetching updated settings:", error);
-    }
-  }
-
-  function updateRadiusCircle(radius, centerCoordinates) {
-    if (radiusCircle) {
-      map.removeLayer(radiusCircle);
-    }
-
-    radiusCircle = L.circle(centerCoordinates, {
-      color: "blue",
-      fillColor: "#24c62c",
-      fillOpacity: 0.5,
-      radius: radius * 1609.34,
-    }).addTo(map);
-  }
-  fetchUpdatedSettings();
-  // settingupdate
-
   // additional
   function handleNoStoresFound(location = "", status = "", category = "") {
     const storeList = document.querySelector("#storeList");
@@ -306,53 +306,119 @@ document.addEventListener("DOMContentLoaded", function () {
     plotStoresOnMap([]);
   }
 
+  // function fetchStoresByLocationAndStatus(location, status) {
+  //   const apiUrl = new URL(
+  //     "http://localhost:5175/api/v1/stores/location-status"
+  //   );
+  //   apiUrl.searchParams.append("location", location);
+  //   apiUrl.searchParams.append("status", status);
+
+  //   fetch(apiUrl)
+  //     .then((response) => {
+  //       if (!response.ok) throw new Error("Network response was not ok");
+  //       return response.json();
+  //     })
+  //     .then((stores) => {
+  //       // Get today's day name
+  //       const todayName = new Date().toLocaleString("en-us", {
+  //         weekday: "long",
+  //       });
+
+  //       // Filter stores based on status and today's working hours
+  //       const filteredStores = stores.filter((store) => {
+  //         const todayWorkingHours = store.workingHours.find(
+  //           (hour) => hour.day === todayName
+  //         );
+
+  //         if (status === "open") {
+  //           return todayWorkingHours && todayWorkingHours.isOpen;
+  //         } else if (status === "closed") {
+  //           return !todayWorkingHours || !todayWorkingHours.isOpen;
+  //         }
+
+  //         return true;
+  //       });
+
+  //       if (filteredStores.length === 0) {
+  //         handleNoStoresFound(location, status);
+
+  //         const storeList = document.querySelector("#storeList");
+  //         const storeCountElement = document.querySelector("#storeCount");
+
+  //         if (storeList) {
+  //           storeList.innerHTML = `<li>No ${status} stores found in ${location}</li>`;
+  //         }
+  //         if (storeCountElement) {
+  //           storeCountElement.textContent = "0";
+  //         }
+  //         plotStoresOnMap([]);
+  //       } else {
+  //         populateStoreList(filteredStores);
+  //         plotStoresOnMap(filteredStores);
+  //       }
+  //     })
+  //     .catch((error) => {
+  //       console.error("Error fetching stores:", error);
+  //       handleNoStoresFound(location, status);
+
+  //       const storeList = document.querySelector("#storeList");
+  //       const storeCountElement = document.querySelector("#storeCount");
+
+  //       if (storeList) {
+  //         storeList.innerHTML = "<li>Error fetching stores</li>";
+  //       }
+  //       if (storeCountElement) {
+  //         storeCountElement.textContent = "0";
+  //       }
+  //       plotStoresOnMap([]);
+  //     });
+  // }
   function fetchStoresByLocationAndStatus(location, status) {
     const apiUrl = new URL(
       "http://localhost:5175/api/v1/stores/location-status"
     );
     apiUrl.searchParams.append("location", location);
     apiUrl.searchParams.append("status", status);
-
+  
     fetch(apiUrl)
       .then((response) => {
         if (!response.ok) throw new Error("Network response was not ok");
         return response.json();
       })
       .then((stores) => {
+        // Get today's day name
         const todayName = new Date().toLocaleString("en-us", {
           weekday: "long",
         });
-
+  
+        // Filter stores based on status and today's working hours
         const filteredStores = stores.filter((store) => {
           const todayWorkingHours = store.workingHours.find(
             (hour) => hour.day === todayName
           );
-
+  
           if (status === "open") {
-            return todayWorkingHours && todayWorkingHours.isOpen;
+              return todayWorkingHours && todayWorkingHours.isOpen;
           } else if (status === "closed") {
-            if (!todayWorkingHours) {
-              return true;
-            }
-            const currentTime = new Date().toLocaleTimeString("en-US", {
-              hour12: false,
-              hour: "2-digit",
-              minute: "2-digit",
-            });
-            return !(
-              currentTime >= todayWorkingHours.start &&
-              currentTime <= todayWorkingHours.end
-            );
+              if (!todayWorkingHours) {
+                  return true; // If no working hours for today, consider it closed
+              }
+              const currentTime = new Date().toLocaleTimeString('en-US', {
+                  hour12: false,
+                  hour: '2-digit',
+                  minute: '2-digit'
+              });
+              return !(currentTime >= todayWorkingHours.start && currentTime <= todayWorkingHours.end);
           }
-          return true;
+          return true; // If status is not open or closed, return all stores
         });
-
+  
         if (filteredStores.length === 0) {
           handleNoStoresFound(location, status);
-
+  
           const storeList = document.querySelector("#storeList");
           const storeCountElement = document.querySelector("#storeCount");
-
+  
           if (storeList) {
             storeList.innerHTML = `<li>No ${status} stores found in ${location}</li>`;
           }
@@ -368,10 +434,10 @@ document.addEventListener("DOMContentLoaded", function () {
       .catch((error) => {
         console.error("Error fetching stores:", error);
         handleNoStoresFound(location, status);
-
+  
         const storeList = document.querySelector("#storeList");
         const storeCountElement = document.querySelector("#storeCount");
-
+  
         if (storeList) {
           storeList.innerHTML = "<li>Error fetching stores</li>";
         }
@@ -381,7 +447,7 @@ document.addEventListener("DOMContentLoaded", function () {
         plotStoresOnMap([]);
       });
   }
-
+  
   // newlyadded
 
   function fetchStoresByLocationCategoryStatus(location, category, status) {

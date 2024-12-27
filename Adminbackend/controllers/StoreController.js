@@ -549,7 +549,8 @@ export const getStoresByStatus = async (req, res) => {
 
     const currentTime = moment();
 
-    const stores = await Store.find();
+     const stores = await Store.find({});
+    
 
     const filteredStores = stores.filter((store) => {
       const { openTime, closeTime } = store.workingHours;
@@ -905,6 +906,8 @@ export const CheckEmail = async (req, res) => {
   }
 };
 
+
+
 export const getStoresByLocationAndStatus = async (req, res) => {
   try {
     const { location, status } = req.query;
@@ -923,8 +926,8 @@ export const getStoresByLocationAndStatus = async (req, res) => {
       published: true,
     };
 
-    // Fetch stores matching the location query
-    const stores = await Store.find(locationQuery);
+    // Fetch stores matching the location query, and populate category name
+    const stores = await Store.find(locationQuery).populate("category", "name");
 
     // Get current day and time
     const today = new Date();
@@ -948,7 +951,7 @@ export const getStoresByLocationAndStatus = async (req, res) => {
       return status === "open" ? isOpen : !isOpen;
     });
 
-    // Respond with the filtered stores
+    // Respond with the filtered stores, including category name
     res.json(filteredStores);
   } catch (error) {
     console.error("Error fetching stores by location and status:", error);
@@ -956,60 +959,4 @@ export const getStoresByLocationAndStatus = async (req, res) => {
   }
 };
 
-// export const getStoresByLocationAndStatus = async (req, res) => {
-//   try {
-//     const { location, status } = req.query;
 
-//     // Validate location
-//     if (!location) {
-//       return res.status(400).json({ error: "Location is required" });
-//     }
-
-//     // Split location into latitude and longitude
-//     const [latitude, longitude] = location.split(",").map(parseFloat);
-
-//     if (isNaN(latitude) || isNaN(longitude)) {
-//       return res.status(400).json({ error: "Invalid location format. Use 'latitude,longitude'" });
-//     }
-
-//     // Base query for geospatial filtering
-//     const query = {
-//       "location.coordinates": {
-//         $geoWithin: {
-//           $centerSphere: [[longitude, latitude], 10 / 6378.1], // 10 km radius (default)
-//         },
-//       },
-//       published: true,
-//     };
-
-//     // Fetch stores within the distance
-//     const stores = await Store.find(query);
-
-//     // Get current day and time
-//     const today = new Date();
-//     const dayName = today.toLocaleString("en-US", { weekday: "long" });
-//     const currentTime = today.toTimeString().slice(0, 5);
-
-//     // Filter stores based on status
-//     const filteredStores = stores.filter((store) => {
-//       const workingHours = store.workingHours || [];
-//       const todayHours = workingHours.find((hours) => hours.day === dayName);
-
-//       if (!todayHours || !todayHours.isOpen) {
-//         // If no working hours for today or the store is closed all day
-//         return status === "closed";
-//       }
-
-//       // Check if the store is currently open
-//       const isOpen = currentTime >= todayHours.start && currentTime <= todayHours.end;
-
-//       return status === "open" ? isOpen : !isOpen;
-//     });
-
-//     // Respond with the filtered stores
-//     res.json(filteredStores);
-//   } catch (error) {
-//     console.error("Error fetching stores by location and status:", error);
-//     res.status(500).json({ error: "Failed to fetch stores" });
-//   }
-// };
