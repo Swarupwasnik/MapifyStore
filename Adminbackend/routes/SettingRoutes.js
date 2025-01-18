@@ -6,6 +6,8 @@ import {
   deleteSettings
 } from '../controllers/SettingsController.js';
 
+
+
 const router = express.Router();
 
 // Settings Routes
@@ -18,23 +20,23 @@ export default router;
 
 
 
-// import express from "express";
+// import express from 'express';
 // import {
 //   createSettings,
 //   updateSettings,
 //   getSettings,
-//   getDefaultSettings
-// } from "../controllers/SettingsController.js";
+//   deleteSettings
+// } from '../controllers/SettingsController.js';
+// import { authenticateUser, authorizeRoles } from '../middleware/authMiddleware.js';
 
 // const router = express.Router();
 
-// // Route to get settings for a specific store
-// router.get("/:storeId", getSettings);
-
-// // Route to create settings
-// router.post("/createsettings", createSettings);
-// router.get('/default', getDefaultSettings);
-// // Route to update settings
-// router.put("/updatesettings", updateSettings);
+// // Settings Routes
+// router.post('/settings1', authenticateUser, authorizeRoles('admin', 'user'), createSettings);
+// router.put('/settings1', authenticateUser, authorizeRoles('admin','user'), updateSettings); 
+// router.get('/settings1', authenticateUser, getSettings);
+// router.delete('/settings1', authenticateUser, authorizeRoles('admin'), deleteSettings); 
 
 // export default router;
+
+

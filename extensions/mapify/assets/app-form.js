@@ -3,6 +3,10 @@ let radiusCircle;
 let mapInitialized = false;
 
 document.addEventListener("DOMContentLoaded", function () {
+
+  
+  
+  
   const mapContainer = document.getElementById("map");
 
   if (mapContainer._leaflet_id) {
@@ -88,12 +92,6 @@ document.addEventListener("DOMContentLoaded", function () {
   // fetchStores();
   fetchStoresByStatus("open");
 
-  // newly added
-  // old
-  // distnaceSlider
-
-  // distanceSlider
-
   document
     .getElementById("searchButton")
     .addEventListener("click", function () {
@@ -144,6 +142,8 @@ document.addEventListener("DOMContentLoaded", function () {
         : "closed";
 
       if (location === "") {
+        map.setView(originalPosition, originalZoom);
+
         if (category) {
           fetchStoresByCategoryAndStatus(category, status);
         } else {
@@ -234,7 +234,6 @@ document.addEventListener("DOMContentLoaded", function () {
   //statusSwitch newlyAdded
 
   //  settingupdate
-
   async function fetchUpdatedSettings() {
     try {
       const response = await fetch(
@@ -271,6 +270,11 @@ document.addEventListener("DOMContentLoaded", function () {
     }).addTo(map);
   }
   fetchUpdatedSettings();
+
+  
+ 
+
+  
   // settingupdate
 
   // additional
@@ -772,6 +776,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       // Add click event to center map and show marker
       storeCard.addEventListener("click", () => {
+
         if (store.address?.latitude && store.address?.longitude) {
           const marker = L.marker([
             store.address.latitude,
@@ -794,7 +799,6 @@ document.addEventListener("DOMContentLoaded", function () {
                   <div class="map-popup-box-info">
                     ✉️ ${store.email}
                   </div>
-                                        
                   <div class="map-popup-box-info">
                     🏷️ Category: ${categoryName}
                   </div>
@@ -965,6 +969,8 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function plotStoresOnMap(stores) {
+
+  
     // old
     // map.eachLayer((layer) => {
     //   if (layer instanceof L.Marker) {
@@ -1022,7 +1028,6 @@ document.addEventListener("DOMContentLoaded", function () {
               <div class="map-popup-box-info">
                 ✉️ ${store.email}
               </div>
-
               <div class="map-popup-box-info">
                 🏷️ Category: ${categoryName}
               </div>

@@ -4,7 +4,7 @@ import { Snackbar, Alert, CircularProgress, Button } from "@mui/material";
 import "../styles/App.css";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
-const StoreRegister = () => {
+const AdminStoreRegister = () => {
   const { storeId } = useParams();
   const [categories, setCategories] = useState([]);
   const [successMessage, setSuccessMessage] = useState("");
@@ -314,6 +314,7 @@ const StoreRegister = () => {
   };
 
   // Modify handleSubmit to include email validation
+ 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -329,21 +330,32 @@ const StoreRegister = () => {
 
     setLoading(true);
     try {
+      const token = localStorage.getItem("userToken"); // Get token from local storage using the correct key
+
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`, // Add the Authorization header
+        },
+      };
+
       if (storeId) {
         await axios.put(
           `http://localhost:5175/api/v1/stores/updatestore/${storeId}`,
-          formData
+          formData,
+          config // Pass the config with headers
         );
         setSuccessMessage("Store updated successfully");
       } else {
         await axios.post(
           "http://localhost:5175/api/v1/stores/addstore",
-          formData
+          formData,
+          config // Pass the config with headers
         );
         setSuccessMessage("Store created successfully");
       }
 
-      navigate("/");
+      // navigate("/");
+      navigate("/allstore");
     } catch (error) {
       console.error("Error saving store:", error);
       setErrorMessage("Error saving store");
@@ -352,6 +364,74 @@ const StoreRegister = () => {
       setLoading(false);
     }
   };
+  useEffect(() => {
+    const fetchStoreData = async () => {
+      if (storeId) {
+        setLoading(true);
+        try {
+          const token = localStorage.getItem("userToken"); // Get token from local storage using the correct key
+
+          const config = {
+            headers: {
+              Authorization: `Bearer ${token}`, // Add the Authorization header
+            },
+          };
+          const response = await axios.get(
+            `http://localhost:5175/api/v1/stores/${storeId}`,
+            config
+          );
+          setFormData(response.data);
+        } catch (error) {
+          console.error("Failed to fetch store data:", error);
+          setError("Failed to fetch store data");
+        }
+        setLoading(false);
+      }
+    };
+
+    fetchStoreData();
+  }, [storeId]);
+
+
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+
+  //   // First, validate the form
+  //   if (!validateForm()) return;
+
+  //   // Check if email is already registered
+  //   const isEmailRegistered = await emailAlreadyRegistered(formData.email);
+  //   if (isEmailRegistered) {
+  //     setLoading(false);
+  //     return;
+  //   }
+
+  //   setLoading(true);
+  //   try {
+  //     if (storeId) {
+  //       await axios.put(
+  //         `http://localhost:5175/api/v1/stores/updatestore/${storeId}`,
+  //         formData
+  //       );
+  //       setSuccessMessage("Store updated successfully");
+  //     } else {
+  //       await axios.post(
+  //         "http://localhost:5175/api/v1/stores/addstore",
+  //         formData
+  //       );
+  //       setSuccessMessage("Store created successfully");
+  //     }
+
+  //     // navigate("/");
+  //      navigate("/allstore")
+  //   } catch (error) {
+  //     console.error("Error saving store:", error);
+  //     setErrorMessage("Error saving store");
+  //     setSnackbarOpen(true);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   // Add debounce utility function
   function debounce(func, delay) {
@@ -695,4 +775,4 @@ const StoreRegister = () => {
   );
 };
 
-export default StoreRegister;
+export default AdminStoreRegister;

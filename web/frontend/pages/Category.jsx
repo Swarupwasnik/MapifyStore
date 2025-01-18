@@ -62,7 +62,11 @@ const Category = () => {
       const response = await axios.get(
         "http://localhost:5175/api/v1/category/getcategory"
       );
-      setCategories(response.data);
+      const sortedCategories = response.data.sort(
+        (a, b) => b._id.localeCompare(a._id)
+      )
+      setCategories(sortedCategories);
+      // setCategories(response.data);
     } catch (error) {
       console.error("Error fetching categories:", error);
     } finally {
@@ -163,19 +167,6 @@ const Category = () => {
     }
   };
 
-  // const handleTogglePublished = async (id, published) => {
-  //   try {
-  //     await axios.put(
-  //       `http://localhost:5175/api/v1/category/updateCategory/${id}`,
-  //       { published: !published }
-  //     );
-  //     showSnackbar("Category publish status updated successfully!");
-  //     fetchCategories();
-  //   } catch (error) {
-  //     console.error("Error updating publish status:", error);
-  //     showSnackbar("Failed to update publish status!", "error");
-  //   }
-  // };
 
   const handleSelectAll = (event) => {
     if (event.target.checked) {
@@ -384,3 +375,5 @@ const Category = () => {
 };
 
 export default Category;
+
+

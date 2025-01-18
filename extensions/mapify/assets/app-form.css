@@ -465,7 +465,7 @@ border-radius: 5px;
 background-color: #f9f9f9;
 }
 
-
+/* map .map-popup-box */
 .map-popup-box {
 width: 250px;
 background-color: #f9f9f9;
@@ -513,6 +513,7 @@ width: 100%;
 border-top: 1px solid #ddd;
 outline: none;
 } 
+/* .map-popup-box */
 /* Marker Card */
 /* print card */
 /* Flexbox for alignment */

@@ -53,8 +53,6 @@ export const getCategoryById = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-;
-
 export const togglePublish = async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);
@@ -73,7 +71,9 @@ export const togglePublish = async (req, res) => {
     );
 
     res.status(200).json({
-      message: `Category ${category.published ? "published" : "unpublished"} successfully`,
+      message: `Category ${
+        category.published ? "published" : "unpublished"
+      } successfully`,
       category,
     });
   } catch (error) {
@@ -81,7 +81,6 @@ export const togglePublish = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
 
 export const updateCategory = async (req, res) => {
   try {
@@ -99,7 +98,6 @@ export const updateCategory = async (req, res) => {
   }
 };
 
-
 export const deleteCategory = async (req, res) => {
   try {
     const categoryId = req.params.id;
@@ -116,25 +114,39 @@ export const deleteCategory = async (req, res) => {
 
     await Store.deleteMany({ category: { $exists: false } });
 
-    res.status(200).json({ message: "Category and associated stores updated successfully" });
+    res
+      .status(200)
+      .json({ message: "Category and associated stores updated successfully" });
   } catch (error) {
     console.error("Error deleting category:", error);
     res.status(500).json({ message: "Failed to delete category" });
   }
 };
 
-
-
-
-
-
-
-
-
 export const getPublishedCategories = async (req, res) => {
   try {
     const publishedCategories = await Category.find({ published: true });
     res.status(200).json(publishedCategories);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+export const getUserCategories = async (req, res) => {
+  try {
+    const userId = req.user._id; // Assuming req.user is populated with the current user's data
+
+    // Find stores registered by the current user
+    const userStores = await Store.find({ user: userId });
+
+    // Extract the store IDs
+    const userStoreIds = userStores.map(store => store._id);
+
+    // Find categories associated with the user's stores
+    const categories = await Category.find({ store: { $in: userStoreIds } });
+
+    res.status(200).json(categories);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -160,5 +172,3 @@ export const getPublishedCategories = async (req, res) => {
 //     res.status(500).json({ message: error.message });
 //   }
 // };
-
-

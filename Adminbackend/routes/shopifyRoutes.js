@@ -1,9 +1,8 @@
 import express from 'express';
-import { initiateOAuth, handleOAuthCallback } from '../controllers/shopifyController.js';
+import { authCallback } from '../controllers/shopifyController.js';
 
 const router = express.Router();
 
-router.get('/auth', initiateOAuth);
-router.get('/auth/callback', handleOAuthCallback);
+router.get('/auth/callback', authCallback);
 
 export default router;

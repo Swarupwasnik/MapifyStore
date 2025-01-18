@@ -1,0 +1,2 @@
+https://admin.shopify.com/store/quickstart-2770d800/oauth/request_grant?access_change_uuid=501575fa-34a1-4491-a76d-21d2377fc65f&client_id=b99d9e7797e3cc43d591fd60c41b90e3
+https://admin.shopify.com/store/quickstart-2770d800/oauth/request_grant?access_change_uuid=718ebf0c-06d1-4102-aaa9-fd190aed66c0&client_id=b99d9e7797e3cc43d591fd60c41b90e3

@@ -1,7 +1,9 @@
 
+
 import mongoose from "mongoose";
 
 const settingsSchema = new mongoose.Schema({
+
   companyName: {
     type: String,
     default: ""
@@ -34,7 +36,12 @@ const settingsSchema = new mongoose.Schema({
   centerCoordinates: {
     type: [Number],
     default: [35.6895, 139.6917]
-  }
+  },
+  // user: {
+  //   type: mongoose.Schema.Types.ObjectId,
+  //   ref: "User",
+  //   required: true
+  // }
 });
 
 const Settings = mongoose.model("Settings", settingsSchema);

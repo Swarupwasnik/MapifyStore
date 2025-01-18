@@ -21,6 +21,11 @@
     "secondaryAction": "Secondary action",
     "title": "Page name"
   },
+  "NotFound": {
+    "heading": "Page Not Found",
+    "description": "Sorry, the page you are looking for does not exist."
+  }
+  ,
   "ProductsCard": {
     "description": "Sample products are created with a default title and price. You can remove them at any time.",
     "errorCreatingProductsToast": "There was an error creating products",

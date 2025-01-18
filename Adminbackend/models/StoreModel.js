@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import Location from "./LocationModel.js";
+import { type } from "os";
 const StoreSchema = new mongoose.Schema(
   {
     company: { type: String, required: true },
@@ -64,6 +65,13 @@ const StoreSchema = new mongoose.Schema(
     additional: { type: String },
     agreeToTerms: { type: Boolean, required: true },
     published: { type: Boolean, default: false },
+    // added
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+  }
+  //added
   },
   { timestamps: true }
 );

@@ -1,0 +1,39 @@
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f4f6f8; /* Light grey background */
+  }
+  
+  .form-wrapper {
+    width: 400px; /* Adjust the width as needed */
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    border-radius: 8px; /* Rounded corners */
+    background-color: #ffffff; /* White background for the form */
+  }
+  
+  h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 24px;
+    color: #212b36; /* Dark grey text */
+  }
+  
+  
+  .auth-links {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+  }
+  
+  .auth-links a {
+    color: #5c6ac4; /* Polaris primary color */
+    text-decoration: none;
+  }
+  
+  .auth-links a:hover {
+    text-decoration: underline;
+  }
+  

@@ -10,12 +10,13 @@ import {
 } from "react-leaflet";
 import L from "leaflet";
 import "../styles/settings.css";
-import { Alert, Snackbar } from "@mui/material"; 
+import { Alert, Snackbar } from "@mui/material";
 
 // Leaflet icon configuration
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
+  iconRetinaUrl:
+    "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
   iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
   shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
 });
@@ -28,7 +29,7 @@ const SettingsPage = () => {
   const [radius, setRadius] = useState("5");
   const [unit, setUnit] = useState("km");
   const [mapColor, setMapColor] = useState("#3498db");
-  const [center, setCenter] = useState([21.14979, 79.08069]); 
+  const [center, setCenter] = useState([21.14979, 79.08069]);
   const [enableGeolocation, setEnableGeolocation] = useState(false);
   const [alert, setAlert] = useState({ message: "", type: "", open: false });
 
@@ -39,32 +40,56 @@ const SettingsPage = () => {
     setAlert((prev) => ({ ...prev, open: false }));
   };
   // Fetch settings on component mount
-  useEffect(() => {
-    const fetchSettings = async () => {
+  
+// Fetch settings on component mount
+useEffect(() => {
+  const fetchSettings = async () => {
       try {
-        const response = await fetch(`http://localhost:5175/api/v1/settings/settings1`);
-        if (response.ok) {
-          const settings = await response.json();
-          setCompany(settings.companyName || "");
-          setContactEmail(settings.contactEmail || "");
-          setZoomLevel(settings.zoomLevel || 10);
-          setRadius(settings.radius || "5");
-          setUnit(settings.unit || "km");
-          setMapColor(settings.mapColor || "#3498db");
-          setCenter(settings.centerCoordinates || [21.14979, 79.08069]);
-          setEnableGeolocation(settings.enableGeolocation || false);
-        } else {
-          console.error("Failed to fetch settings");
-          alert("Failed to fetch settings.");
-        }
-      } catch (error) {
-        console.error("Error fetching settings:", error);
-        alert("Error fetching settings.");
-      }
-    };
+          const token = localStorage.getItem("userToken"); // Change from "token" to "userToken"
+          if (!token) {
+              console.error("Token is missing from localStorage");
+              showAlert("Authentication token is missing. Please log in.", "error");
+              window.location.href = "/login"; // Redirect to login
+              return;
+          }
 
-    fetchSettings();
-  }, []);
+          const response = await fetch("http://localhost:5175/api/v1/settings/settings1", {
+              headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+              },
+          });
+
+          if (response.ok) {
+              const settings = await response.json();
+              // Update state with fetched settings
+              setCompany(settings.companyName || "");
+              setContactEmail(settings.contactEmail || "");
+              setZoomLevel(settings.zoomLevel || 10);
+              setRadius(settings.radius || "5");
+              setUnit(settings.unit || "km");
+              setMapColor(settings.mapColor || "#3498db");
+              setCenter(settings.centerCoordinates || [21.14979, 79.08069]);
+              setEnableGeolocation(settings.enableGeolocation || false);
+          } else if (response.status === 401) {
+              console.error("Authentication error");
+              showAlert("Session expired. Please log in again.", "error");
+              localStorage.removeItem("userToken"); // Clear invalid token
+              window.location.href = "/login"; // Redirect to login
+          } else {
+              console.error("Failed to fetch settings");
+              showAlert("Failed to fetch settings.", "error");
+          }
+      } catch (error) {
+          console.error("Error fetching settings:", error);
+          showAlert("Error fetching settings.", "error");
+      }
+  };
+
+  fetchSettings();
+}, []);
+
+
 
   // Save settings handler
   const handleSave = async () => {
@@ -84,13 +109,22 @@ const SettingsPage = () => {
       return;
     }
 
-    if (!center || center.length !== 2 || isNaN(center[0]) || isNaN(center[1])) {
-      showAlert("Center coordinates must be valid latitude and longitude values.");
+    if (
+      !center ||
+      center.length !== 2 ||
+      isNaN(center[0]) ||
+      isNaN(center[1])
+    ) {
+      showAlert(
+        "Center coordinates must be valid latitude and longitude values."
+      );
       return;
     }
 
     try {
       // Prepare settings object
+      const token = localStorage.getItem("userToken");
+
       const updatedSettings = {
         companyName: company,
         contactEmail: contactEmail,
@@ -103,11 +137,17 @@ const SettingsPage = () => {
       };
 
       // Send update request
-      const response = await fetch(`http://localhost:5175/api/v1/settings/settings1`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedSettings),
-      });
+      const response = await fetch(
+        `http://localhost:5175/api/v1/settings/settings1`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(updatedSettings),
+        }
+      );
 
       if (response.ok) {
         showAlert("Settings saved successfully!");
@@ -141,7 +181,7 @@ const SettingsPage = () => {
 
   return (
     <div className="store-locator-settings">
-     <Snackbar
+      <Snackbar
         open={alert.open}
         autoHideDuration={3000}
         onClose={handleCloseAlert}
@@ -283,9 +323,3 @@ const SettingsPage = () => {
 };
 
 export default SettingsPage;
-
-
-
-
-
-

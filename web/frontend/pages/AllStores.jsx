@@ -80,7 +80,7 @@ const AllStore = () => {
     transform: "translate(-50%, -50%)",
     width: "80%",
     maxHeight: "80%",
-     bgcolor: "white",
+    bgcolor: "white",
     boxShadow: 24,
     p: 4,
     overflowY: "auto",
@@ -97,38 +97,22 @@ const AllStore = () => {
     navigate("/storereg");
   };
   // added into it
-  // const handleEditStore = (store) => {
-  //   // Ensure workingHours is initialized properly
-  //   const workingHours = daysOfWeek.reduce((acc, day) => {
-  //     acc[day] = store.workingHours[day] || {
-  //       isOpen: false,
-  //       start: "",
-  //       end: "",
-  //     };
-  //     return acc;
-  //   }, {});
-
-  //   setSelectedStore({ ...store, workingHours });
-  //   setIsEditing(true);
-  // };
 
   const handleEditStore = (store) => {
-    const workingHours = daysOfWeek.map((day) => {
-      const dayData = store.workingHours.find((wh) => wh.day === day) || {
-        isOpen: false,
-        start: "",
-        end: "",
-        customTimes: [],
-      };
-      return { ...dayData };
+    // Directly use the existing workingHours array
+    setSelectedStore({
+      ...store,
+      workingHours: store.workingHours.map((day) => ({
+        ...day,
+        customTimes: day.customTimes || [],
+      })),
     });
-
-    setSelectedStore({ ...store, workingHours });
     setIsEditing(true);
   };
+  const getToken = () => {
+    return localStorage.getItem("userToken");
+  };
 
-  // added into it
-  // update new
   useEffect(() => {
     const fetchStores = async () => {
       setLoading(true);
@@ -140,7 +124,13 @@ const AllStore = () => {
             ? "http://localhost:5175/api/v1/stores/unpublished?shop=quickstart-2770d800.myshopify.com"
             : "http://localhost:5175/api/v1/stores/stores?shop=quickstart-2770d800.myshopify.com";
 
-        const response = await retryFetch(endpoint, { method: "GET" });
+        const token = getToken();
+        const response = await retryFetch(endpoint, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
         // Sort stores by creation date (newest first)
         const sortedStores = response.data.sort((a, b) => {
@@ -166,17 +156,23 @@ const AllStore = () => {
 
     fetchStores();
   }, [filter]);
-
   const fetchCategories = async () => {
     try {
+      const token = getToken();
       const response = await axios.get(
-        "http://localhost:5175/api/v1/category/publishcategory"
+        "http://localhost:5175/api/v1/category/publishcategory",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       setCategories(response.data);
     } catch (err) {
       setError("Error fetching categories");
     }
   };
+
   useEffect(() => {
     if (isEditing) {
       fetchCategories();
@@ -214,14 +210,19 @@ const AllStore = () => {
   };
 
   // newlyadded
-
   const handleTogglePublished = async (storeId, isPublished) => {
     setError("");
     setSuccess("");
     try {
+      const token = getToken();
       const response = await axios.put(
         `http://localhost:5175/api/v1/stores/${storeId}/publish`,
-        { published: !isPublished }
+        { published: !isPublished },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       setStores((prevStores) =>
         prevStores.map((store) =>
@@ -320,14 +321,19 @@ const AllStore = () => {
       return;
     }
 
-    // Construct workingHours as an array
-    const workingHours = daysOfWeek.map((day) => ({
-      day,
-      isOpen: selectedStore.workingHours[day]?.isOpen || false,
-      start: selectedStore.workingHours[day]?.start || "09:00",
-      end: selectedStore.workingHours[day]?.end || "18:00",
-      // customTimes: [],
-      customTimes: selectedStore.workingHours[day]?.customTimes || [],
+    const token = getToken();
+    if (!token) {
+      setError("Authentication token is missing.");
+      setTimeout(() => setError(""), 3000);
+      return;
+    }
+
+    const workingHours = selectedStore.workingHours.map((dayData) => ({
+      day: dayData.day,
+      isOpen: dayData.isOpen,
+      start: dayData.start,
+      end: dayData.end,
+      customTimes: dayData.customTimes || [],
     }));
 
     // Create payload for the API request
@@ -360,7 +366,12 @@ const AllStore = () => {
       // Send PUT request to update store
       const response = await axios.put(
         `http://localhost:5175/api/v1/stores/updatestore/${selectedStore._id}`,
-        payload
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
       // Update the store list with the new data
@@ -384,8 +395,15 @@ const AllStore = () => {
 
   const handleDeleteStore = async (id) => {
     try {
+      const token = getToken();
+
       await axios.delete(
-        `http://localhost:5175/api/v1/stores/deletestore/${id}`
+        `http://localhost:5175/api/v1/stores/deletestore/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       setStores((prevStores) => prevStores.filter((store) => store._id !== id));
       setSuccess("Store deleted successfully.");
@@ -397,20 +415,29 @@ const AllStore = () => {
   const handleDeleteSelectedStores = async () => {
     const idsToDelete = selectedRows.map((index) => stores[index]._id);
     try {
+      const token = getToken();
       await Promise.all(
         idsToDelete.map((id) =>
-          axios.delete(`http://localhost:5175/api/v1/stores/deletestore/${id}`)
+          axios.delete(
+            `http://localhost:5175/api/v1/stores/deletestore/${id}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          )
         )
       );
       setStores((prevStores) =>
         prevStores.filter((_, index) => !selectedRows.includes(index))
       );
       setSuccess("Selected stores deleted successfully.");
-      setSelectedRows([]); // Clear selected rows after deletion
+      setSelectedRows([]);
     } catch (error) {
       setError("Error deleting selected stores.");
     }
   };
+
   // newlyUpdate
   // updateOne
 
@@ -823,87 +850,93 @@ const AllStore = () => {
                     fullWidth
                   />
                 </Grid>
-                {daysOfWeek.map((day) => (
-                  <Grid item xs={12} key={day}>
-                    <Stack
-                      direction="row"
-                      spacing={2}
-                      alignItems="center"
-                      justifyContent="space-between"
-                    >
-                      <Typography style={{ width: "100px" }}>{day}</Typography>
-                      <Switch
-                        checked={
-                          selectedStore.workingHours[day]?.isOpen || false
-                        }
-                        onChange={(e) => {
-                          const isOpen = e.target.checked;
-                          const updatedWorkingHours = {
-                            ...selectedStore.workingHours,
-                            [day]: {
-                              ...selectedStore.workingHours[day],
-                              isOpen,
-                              start: isOpen
-                                ? selectedStore.workingHours[day]?.start ||
-                                  "09:00" // Default start time
-                                : "", // Clear if closed
-                              end: isOpen
-                                ? selectedStore.workingHours[day]?.end ||
-                                  "18:00" // Default end time
-                                : "", // Clear if closed
-                            },
-                          };
-                          setSelectedStore({
-                            ...selectedStore,
-                            workingHours: updatedWorkingHours,
-                          });
-                        }}
-                      />
-                      {selectedStore.workingHours[day]?.isOpen && (
-                        <Stack direction="row" spacing={2}>
-                          <TextField
-                            label="Start Time"
-                            type="time"
-                            value={selectedStore.workingHours[day]?.start || ""}
-                            onChange={(event) => {
-                              const start = event.target.value;
-                              const updatedWorkingHours = {
-                                ...selectedStore.workingHours,
-                                [day]: {
-                                  ...selectedStore.workingHours[day],
-                                  start,
-                                },
-                              };
-                              setSelectedStore({
-                                ...selectedStore,
-                                workingHours: updatedWorkingHours,
-                              });
-                            }}
-                          />
-                          <TextField
-                            label="End Time"
-                            type="time"
-                            value={selectedStore.workingHours[day]?.end || ""}
-                            onChange={(event) => {
-                              const end = event.target.value;
-                              const updatedWorkingHours = {
-                                ...selectedStore.workingHours,
-                                [day]: {
-                                  ...selectedStore.workingHours[day],
-                                  end,
-                                },
-                              };
-                              setSelectedStore({
-                                ...selectedStore,
-                                workingHours: updatedWorkingHours,
-                              });
-                            }}
-                          />
-                        </Stack>
-                      )}
-                    </Stack>
-                  </Grid>
-                ))}
+                {daysOfWeek.map((day) => {
+                  // Find the specific day's data from the workingHours array
+                  const dayData = selectedStore.workingHours.find(
+                    (wh) => wh.day === day
+                  );
+
+                  return (
+                    <Grid item xs={12} key={day}>
+                      <Stack
+                        direction="row"
+                        spacing={2}
+                        alignItems="center"
+                        justifyContent="space-between"
+                      >
+                        <Typography style={{ width: "100px" }}>
+                          {day}
+                        </Typography>
+                        <Switch
+                          checked={dayData?.isOpen || false}
+                          onChange={(e) => {
+                            const isOpen = e.target.checked;
+
+                            // Create updated working hours array
+                            const updatedWorkingHours =
+                              selectedStore.workingHours.map((wh) =>
+                                wh.day === day
+                                  ? {
+                                      ...wh,
+                                      isOpen,
+                                      start: isOpen ? wh.start : "",
+                                      end: isOpen ? wh.end : "",
+                                    }
+                                  : wh
+                              );
+
+                            setSelectedStore({
+                              ...selectedStore,
+                              workingHours: updatedWorkingHours,
+                            });
+                          }}
+                        />
+
+                        {dayData?.isOpen && (
+                          <Stack direction="row" spacing={2}>
+                            {/* Main Store Hours */}
+                            <TextField
+                              label="Start Time"
+                              type="time"
+                              value={dayData.start || ""}
+                              onChange={(event) => {
+                                const start = event.target.value;
+
+                                const updatedWorkingHours =
+                                  selectedStore.workingHours.map((wh) =>
+                                    wh.day === day ? { ...wh, start } : wh
+                                  );
+
+                                setSelectedStore({
+                                  ...selectedStore,
+                                  workingHours: updatedWorkingHours,
+                                });
+                              }}
+                            />
+                            <TextField
+                              label="End Time"
+                              type="time"
+                              value={dayData.end || ""}
+                              onChange={(event) => {
+                                const end = event.target.value;
+
+                                const updatedWorkingHours =
+                                  selectedStore.workingHours.map((wh) =>
+                                    wh.day === day ? { ...wh, end } : wh
+                                  );
+
+                                setSelectedStore({
+                                  ...selectedStore,
+                                  workingHours: updatedWorkingHours,
+                                });
+                              }}
+                            />
+                          </Stack>
+                        )}
+                      </Stack>
+                    </Grid>
+                  );
+                })}
               </Grid>
               <Stack
                 direction="row"

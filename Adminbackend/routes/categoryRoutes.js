@@ -6,8 +6,9 @@ import {
   deleteCategory,
   togglePublish,
   getPublishedCategories,
+  getUserCategories
 } from "../controllers/categoryController.js";
-import { authenticateAdmin } from "../middleware/authMiddleware.js";
+import { authenticateUser } from "../middleware/authMiddleware.js";
 import express from "express"; 
 
 const router = express.Router();
@@ -18,5 +19,6 @@ router.put("/updatecategory/:id", updateCategory);
 router.delete("/deletecategory/:id", deleteCategory);
 router.put("/:id/toggle-publish", togglePublish);
 router.get("/publishcategory", getPublishedCategories);
+router.route('/user-categories',authenticateUser, getUserCategories);
 
 export default router;

@@ -1,94 +1,197 @@
-import User from "../models/userModel.js";
 import jwt from "jsonwebtoken";
-// Register user
+import User from "../models/userModel.js";
+import crypto from "crypto";
+
+const generateToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET, {
+    expiresIn: "30d",
+  });
+};
+
 export const registerUser = async (req, res) => {
   try {
-    const { username, email, password, role } = req.body;
+    const { username, email, password } = req.body;
 
-    // Check if user already exists
+    // Check if any users exist in the database
+    const userCount = await User.countDocuments();
+
+    const role = userCount === 0 ? "admin" : "user";
+    // Default subscription when registering
+    const subscription = "free";
+
     const userExists = await User.findOne({ email });
     if (userExists) {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    // Create new user
-    const user = new User({ username, email, password, role });
-    await user.save();
+    const user = await User.create({
+      username,
+      email,
+      password,
+      role,
+      subscription, // Include subscription
+    });
 
-    res.status(201).json({ message: "User registered successfully" });
+    if (user) {
+      res.status(201).json({
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        subscription: user.subscription, // Include subscription in response
+        token: generateToken(user._id),
+      });
+    } else {
+      res.status(400).json({ message: "Invalid user data" });
+    }
   } catch (error) {
-    res.status(500).json({ message: "Error registering user", error });
+    res
+      .status(500)
+      .json({ message: "Error during registration", error: error.message });
   }
 };
 
-// Login user
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
-
-    // Find the user by email
     const user = await User.findOne({ email });
 
-    // Check if user exists and password matches
     if (user && (await user.matchPassword(password))) {
-      // Create a token with user ID and role
-      const token = jwt.sign(
-        { id: user._id, role: user.role },
-        process.env.JWT_SECRET,
-        { expiresIn: "30d" }
-      );
-
       res.json({
-        message: "Login successful",
-        token,
+        _id: user._id,
+        username: user.username,
+        email: user.email,
         role: user.role,
+        subscription: user.subscription, // Include subscription in response
+        token: generateToken(user._id),
       });
     } else {
       res.status(401).json({ message: "Invalid email or password" });
     }
   } catch (error) {
-    res.status(500).json({ message: "Error logging in", error });
+    res
+      .status(500)
+      .json({ message: "Error during login", error: error.message });
   }
 };
 
-// Get all users (Admin only)
-export const getAllUsers = async (req, res) => {
+export const loginAdmin = async (req, res) => {
   try {
-    // Ensure only admin can access this route
-    const userRole = req.user.role; // Assumes role is stored in req.user from middleware
-    if (userRole !== "admin") {
-      return res.status(403).json({ message: "Access denied: Admins only" });
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+
+    if (user && user.role === "admin" && (await user.matchPassword(password))) {
+      res.json({
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        subscription: user.subscription, // Include subscription in response
+        token: generateToken(user._id),
+      });
+    } else {
+      res.status(401).json({ message: "Invalid credentials or not an admin" });
     }
-
-    // Retrieve all users from the database
-    const users = await User.find({});
-    res.json(users);
   } catch (error) {
-    res.status(500).json({ message: "Error retrieving users", error });
+    res
+      .status(500)
+      .json({ message: "Error during admin login", error: error.message });
   }
 };
-export const getCurrentUser = async (req, res) => {
+
+// Forgot Password
+export const forgotPassword = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id); // Get user data from DB using the user ID in the token
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    res.json(user); // Return user data
+
+    const resetToken = crypto.randomBytes(20).toString("hex");
+    const resetTokenHash = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+
+    console.log("Generated Reset Token:", resetToken);
+    console.log("Generated Reset Token Hash:", resetTokenHash);
+
+    user.resetPasswordToken = resetTokenHash;
+    user.resetPasswordExpire = Date.now() + 3600000; // 1 hour from now
+
+    await user.save();
+    console.log("User Document After Saving Reset Token:", user);
+
+    res
+      .status(200)
+      .json({ message: "Password reset token generated", resetToken });
   } catch (error) {
-    res.status(500).json({ message: "Error fetching user data", error });
+    res
+      .status(500)
+      .json({ message: "Error during forgot password", error: error.message });
   }
 };
 
-export const logOut = (req, res) => {
+// Reset Password
+export const resetPassword = async (req, res) => {
   try {
-    res.clearCookie("token", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-    }); // Clears the cookie with JWT
+    const resetToken = req.params.token;
+    const resetTokenHash = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
 
-    // Send response
-    res.json({ message: "Logout successful" });
+    console.log("Received Reset Token:", resetToken);
+    console.log("Received Reset Token Hash:", resetTokenHash);
+
+    const user = await User.findOne({
+      resetPasswordToken: resetTokenHash,
+      resetPasswordExpire: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      console.log("No user found or token expired");
+      return res
+        .status(400)
+        .json({ message: "Invalid token or token has expired" });
+    }
+
+    console.log("User Document Found for Reset:", user);
+
+    user.password = req.body.password;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+
+    await user.save();
+    console.log("User Document After Password Reset:", user);
+
+    res.status(200).json({ message: "Password reset successful" });
   } catch (error) {
-    res.status(500).json({ message: "Error logging out", error });
+    res
+      .status(500)
+      .json({ message: "Error during password reset", error: error.message });
   }
 };
+export const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find({ role: "user" });
+    res.json(users);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error fetching users", error: error.message });
+  }
+};
+// Get stores for a specific user (Admin only)
+
+
+// export const getAllUsers = async (req, res) => {
+//   try {
+//     const users = await User.find({});
+//     res.json(users);
+//   } catch (error) {
+//     res.status(500).json({ message: "Error fetching users", error: error.message });
+//   }
+// };

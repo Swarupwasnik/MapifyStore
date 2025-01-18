@@ -3,8 +3,6 @@ import Category from "../models/CategoryModel.js";
 import Store from "../models/StoreModel.js";
 import moment from "moment";
 import { retry } from "../services/retryService.js";
-import { calculateDistance } from "../utils/distanceUtils.js";
-import mongoose from "mongoose";
 
 const sdk = new SuperfaceClient();
 
@@ -143,7 +141,7 @@ async function geocodeLocation(loc) {
 }
 // newly update
 
-// newlyupdate
+
 export const addStore = async (req, res) => {
   try {
     const {
@@ -160,6 +158,9 @@ export const addStore = async (req, res) => {
       additional,
     } = req.body;
 
+    // Log the user information
+    console.log('User in addStore:', req.user);
+
     // Required fields validation
     if (
       !company ||
@@ -170,16 +171,61 @@ export const addStore = async (req, res) => {
       !address ||
       agreeToTerms === undefined
     ) {
-      return res
-        .status(400)
-        .json({ error: "Some required fields are missing" });
+      return res.status(400).json({ error: 'Some required fields are missing' });
+    }
+
+    // Check if the user is an admin or a normal user
+    const user = req.user;
+    if (!user) {
+      console.log('User object is undefined');
+      return res.status(403).json({ error: 'Unauthorized role' });
+    }
+
+    if (user.role !== 'admin' && user.role !== 'user') {
+      console.log(`User role is not authorized: ${user.role}`);
+      return res.status(403).json({ error: 'Unauthorized role' });
     }
 
     // Geocode the location based on the city in the address
     const coordinates = await geocodeLocation(address.city);
+    if (!coordinates || !coordinates.latitude || !coordinates.longitude) {
+      // Handle the case where coordinates are not available
+      console.log("Coordinates are not available");
+      return res.status(400).json({ error: "Unable to find geolocation coordinates for address" });
+    }
+
     const category = await Category.findById(categoryId);
     if (!category) {
-      return res.status(404).json({ error: "Category not found" });
+      return res.status(404).json({ error: 'Category not found' });
+    }
+
+    // --- Subscription-based store limits ---
+    if (user.role === 'user') {
+      let maxStores;
+      switch (user.subscription) {
+        case 'free':
+          maxStores = 1;
+          break;
+        case 'pro':
+          maxStores = 10;
+          break;
+        case 'enterprise':
+          maxStores = 100;
+          break;
+        default:
+          maxStores = 0; // Or handle as an error case
+      }
+
+      if(maxStores === 0) {
+          return res.status(403).json({ error: 'Invalid subscription.' });
+      }
+
+      const storeCount = await Store.countDocuments({ user: user._id });
+      if (storeCount >= maxStores) {
+        return res.status(403).json({
+          error: `You have reached the maximum number of stores allowed for your subscription plan (${user.subscription}).`,
+        });
+      }
     }
 
     // Create the store with published defaulting to false
@@ -195,7 +241,7 @@ export const addStore = async (req, res) => {
         longitude: coordinates.longitude,
       },
       location: {
-        type: "Point",
+        type: 'Point',
         coordinates: [coordinates.longitude, coordinates.latitude],
       },
       workingHours,
@@ -204,17 +250,109 @@ export const addStore = async (req, res) => {
       fax,
       additional,
       published: false,
+      user: user._id, // Corrected: Use 'user' instead of 'owner'
     });
 
     await newStore.save();
     res.status(201).json(newStore);
   } catch (error) {
-    console.error("Error adding store:", error);
-    res
-      .status(500)
-      .json({ error: "Error adding store", details: error.message });
+    console.error('Error adding store:', error);
+    res.status(500).json({ error: 'Error adding store', details: error.message });
   }
 };
+
+
+// export const addStore = async (req, res) => {
+//   try {
+//     const {
+//       company,
+//       name,
+//       email,
+//       phone,
+//       categoryId,
+//       address,
+//       workingHours,
+//       agreeToTerms,
+//       websiteURL,
+//       fax,
+//       additional,
+//     } = req.body;
+
+//     // Log the user information
+//     console.log('User in addStore:', req.user);
+
+//     // Required fields validation
+//     if (
+//       !company ||
+//       !name ||
+//       !email ||
+//       !phone ||
+//       !categoryId ||
+//       !address ||
+//       agreeToTerms === undefined
+//     ) {
+//       return res.status(400).json({ error: 'Some required fields are missing' });
+//     }
+
+//     // Check if the user is an admin or a normal user
+//     const user = req.user;
+//     if (!user) {
+//       console.log('User object is undefined');
+//       return res.status(403).json({ error: 'Unauthorized role' });
+//     }
+
+//     if (user.role !== 'admin' && user.role !== 'user') {
+//       console.log(`User role is not authorized: ${user.role}`);
+//       return res.status(403).json({ error: 'Unauthorized role' });
+//     }
+
+//     // Geocode the location based on the city in the address
+//     const coordinates = await geocodeLocation(address.city);
+//       if (!coordinates || !coordinates.latitude || !coordinates.longitude) {
+//        // Handle the case where coordinates are not available
+//        console.log("Coordinates are not available");
+//        return res.status(400).json({ error: "Unable to find geolocation coordinates for address" });
+//      }
+
+//     const category = await Category.findById(categoryId);
+//     if (!category) {
+//       return res.status(404).json({ error: 'Category not found' });
+//     }
+
+//     // Create the store with published defaulting to false
+//     const newStore = new Store({
+//       company,
+//       name,
+//       email,
+//       phone,
+//       category: categoryId,
+//       address: {
+//         ...address,
+//         latitude: coordinates.latitude,
+//         longitude: coordinates.longitude,
+//       },
+//       location: {
+//         type: 'Point',
+//         coordinates: [coordinates.longitude, coordinates.latitude],
+//       },
+//       workingHours,
+//       agreeToTerms,
+//       websiteURL,
+//       fax,
+//       additional,
+//       published: false,
+//       user: user._id, // Corrected: Use 'user' instead of 'owner'
+//     });
+
+//     await newStore.save();
+//     res.status(201).json(newStore);
+//   } catch (error) {
+//     console.error('Error adding store:', error);
+//     res.status(500).json({ error: 'Error adding store', details: error.message });
+//   }
+// };
+
+
 // update Store
 export const updateStore = async (req, res) => {
   try {
@@ -418,22 +556,10 @@ export const searchStoresByCategory = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
-export const getAllStores = async (req, res) => {
-  try {
-    const stores = await retry(() => Store.find().populate("category"));
-    res.json(stores);
-  } catch (error) {
-    console.error("Error retrieving all stores:", error);
-    res
-      .status(500)
-      .json({ error: "Error retrieving all stores", details: error.message });
-  }
-};
-
+// added
 // export const getAllStores = async (req, res) => {
 //   try {
-//     const stores = await Store.find().populate("category");
+//     const stores = await retry(() => Store.find().populate("category"));
 //     res.json(stores);
 //   } catch (error) {
 //     console.error("Error retrieving all stores:", error);
@@ -443,6 +569,7 @@ export const getAllStores = async (req, res) => {
 //   }
 // };
 
+// added
 export const togglePublishStore = async (req, res) => {
   try {
     const store = await Store.findById(req.params.id);
@@ -483,15 +610,23 @@ export const getPublishedStores = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch published stores" });
   }
 };
-
 export const getUnpublishedStores = async (req, res) => {
   try {
-    const stores = await Store.find({ published: false });
-    res.status(200).json(stores);
+    const stores = await Store.find({ published: false })
+      .populate({
+        path: "category",
+        select: "name",
+      })
+      .lean();
+
+    const filteredStores = stores.filter((store) => store.category !== null);
+
+    res.status(200).json(filteredStores);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch unpublished stores" });
   }
 };
+
 // right code
 // export const getStoresByStatus = async (req, res) => {
 //   try {
@@ -549,8 +684,7 @@ export const getStoresByStatus = async (req, res) => {
 
     const currentTime = moment();
 
-     const stores = await Store.find({});
-    
+    const stores = await Store.find({});
 
     const filteredStores = stores.filter((store) => {
       const { openTime, closeTime } = store.workingHours;
@@ -906,8 +1040,6 @@ export const CheckEmail = async (req, res) => {
   }
 };
 
-
-
 export const getStoresByLocationAndStatus = async (req, res) => {
   try {
     const { location, status } = req.query;
@@ -959,4 +1091,263 @@ export const getStoresByLocationAndStatus = async (req, res) => {
   }
 };
 
+export const getStoresByShop = async (req, res) => {
+  try {
+    const { shop } = req.query; // Pass shop identifier as a query parameter
 
+    if (!shop) {
+      return res.status(400).json({ error: "Shop identifier is required" });
+    }
+
+    const stores = await Store.find({ shop }).populate("category");
+
+    res.status(200).json(stores);
+  } catch (error) {
+    console.error("Error fetching stores:", error);
+    res
+      .status(500)
+      .json({ error: "Error fetching stores", details: error.message });
+  }
+};
+
+// latest updated code
+
+// controllers/StoreController.
+// export const getUserStores = async (req, res) => {
+//   try {
+//     const user = req.user;
+
+//     if (!user) {
+//       return res.status(401).json({ error: 'Unauthorized' });
+//     }
+
+//     const { category } = req.query;
+//     const filter = { user: user._id };
+
+//     if (category) {
+//       const stores = await Store.find(filter)
+//         .populate({
+//           path: 'category',
+//           match: { name: category },
+//           select: 'name' 
+//         })
+//         .exec();
+
+//       const filteredStores = stores.filter(store => store.category !== null);
+
+//       return res.status(200).json(filteredStores);
+//     } else {
+//       const stores = await Store.find(filter).populate('category', 'name').exec();
+//       return res.status(200).json(stores);
+//     }
+//   } catch (error) {
+//     console.error('Error getting user stores:', error);
+//     res.status(500).json({ error: 'Error getting user stores', details: error.message });
+//   }
+// };
+
+// export const getUserStores = async (req, res) => {
+//   try {
+//     const user = req.user;
+//     if (!user) {
+//       return res.status(401).json({ error: 'Unauthorized' });
+//     }
+
+//     const { category, status } = req.query; // Accept 'status' as a query parameter
+//     const filter = { user: user._id };
+
+//     if (category) {
+//       // Find the category by name to get its ID
+//       const categoryDoc = await Category.findOne({ name: category });
+//       if (!categoryDoc) {
+//         return res.status(404).json({ error: 'Category not found' });
+//       }
+//       filter.category = categoryDoc._id;
+//     }
+
+//     let stores = await Store.find(filter).populate('category', 'name').exec();
+
+//     if (status) {
+//       const currentDay = new Date().toLocaleString('en-US', { weekday: 'long' });
+//       const currentTime = new Date().toTimeString().split(' ')[0]; // Get the current time in HH:mm format
+
+//       stores = stores.filter((store) => {
+//         const workingDay = store.workingHours.find((day) => day.day === currentDay);
+
+//         if (!workingDay || !workingDay.isOpen) return status === 'closed';
+
+//         const isOpen = currentTime >= workingDay.start && currentTime <= workingDay.end;
+//         return status === 'open' ? isOpen : !isOpen;
+//       });
+//     }
+
+//     res.status(200).json(stores);
+//   } catch (error) {
+//     console.error('Error getting user stores:', error);
+//     res.status(500).json({ error: 'Error getting user stores', details: error.message });
+//   }
+// };
+
+
+export const getUserStores = async (req, res) => {
+  try {
+    const user = req.user;
+    if (!user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { category, status, city } = req.query; // Accept 'city' as a query parameter
+    const filter = { user: user._id };
+
+    if (category) {
+      // Find the category by name to get its ID
+      const categoryDoc = await Category.findOne({ name: category });
+      if (!categoryDoc) {
+        return res.status(404).json({ error: 'Category not found' });
+      }
+      filter.category = categoryDoc._id;
+    }
+
+    if (city) {
+      // Add city filter
+      filter['address.city'] = city;
+    }
+
+    let stores = await Store.find(filter).populate('category', 'name').exec();
+
+    if (status) {
+      const currentDay = new Date().toLocaleString('en-US', { weekday: 'long' });
+      const currentTime = new Date().toTimeString().split(' ')[0]; // Get the current time in HH:mm format
+
+      stores = stores.filter((store) => {
+        const workingDay = store.workingHours.find((day) => day.day === currentDay);
+
+        if (!workingDay || !workingDay.isOpen) return status === 'closed';
+
+        const isOpen = currentTime >= workingDay.start && currentTime <= workingDay.end;
+        return status === 'open' ? isOpen : !isOpen;
+      });
+    }
+
+    res.status(200).json(stores);
+  } catch (error) {
+    console.error('Error getting user stores:', error);
+    res.status(500).json({ error: 'Error getting user stores', details: error.message });
+  }
+};
+
+
+// controllers/StoreController.js
+
+export const getAllStores = async (req, res) => {
+  try {
+    const user = req.user;
+
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized: Admin access required' });
+    }
+
+    const stores = await Store.find();
+    res.status(200).json(stores);
+  } catch (error) {
+    console.error('Error getting all stores:', error);
+    res.status(500).json({ error: 'Error getting all stores', details: error.message });
+  }
+};
+
+// controllers/StoreController.js
+export const getStoresByUserId = async (req, res) => {
+  try {
+    const user = req.user;
+    const { userId } = req.params; // Get the user ID from the URL params
+
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized: Admin access required' });
+    }
+
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    const stores = await Store.find({ user: userId });
+    res.status(200).json(stores);
+  } catch (error) {
+    console.error('Error getting stores by user ID:', error);
+    res.status(500).json({ error: 'Error getting stores by user ID', details: error.message });
+  }
+};
+// controllers/StoreController.js
+export const getAdminStores = async (req, res) => {
+  try {
+    const user = req.user;
+
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized: Admin access required' });
+    }
+
+    const stores = await Store.find({ user: user._id });
+    res.status(200).json(stores);
+  } catch (error) {
+    console.error('Error getting admin stores:', error);
+    res.status(500).json({ error: 'Error getting admin stores', details: error.message });
+  }
+};
+
+
+export const getUserStoresByCategory = async (req, res) => {
+  try {
+    const user = req.user;
+
+    if (!user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { category } = req.query; // Assuming category is passed as a query parameter
+
+    // Build the query object
+    const query = { user: user._id };
+    if (category) {
+      query.category = category; // Adjust this field name based on your schema
+    }
+
+    const stores = await Store.find(query);
+    res.status(200).json(stores);
+  } catch (error) {
+    console.error('Error getting user stores by category:', error);
+    res.status(500).json({ error: 'Error getting user stores by category', details: error.message });
+  }
+};
+
+export const getStoresCount = async (req, res) => {
+  try {
+    const user = req.user; // Assuming user is set in the request (middleware)
+    if (!user) {
+      return res.status(403).json({ error: "Unauthorized" });
+    }
+
+    let storeCount;
+    if (user.role === 'admin') {
+      // If the user is an admin, return the count of all stores
+      storeCount = await Store.countDocuments();
+    } else {
+      // For normal users, count stores added by the user
+      storeCount = await Store.countDocuments({ user: user._id });
+    }
+
+    res.status(200).json({ count: storeCount });
+  } catch (error) {
+    console.error("Error fetching store count:", error);
+    res.status(500).json({ error: "Error fetching store count" });
+  }
+};
+export const getUserStoresByAdmin = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const stores = await Store.find({ user: userId });
+    res.json(stores);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error fetching stores", error: error.message });
+  }
+};

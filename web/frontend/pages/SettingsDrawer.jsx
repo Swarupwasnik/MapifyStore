@@ -11,18 +11,24 @@ const SettingsDrawer = ({ isOpen, toggleDrawer }) => {
   };
 
   const handleLimitClick = (limit) => {
-    onLimitChange(limit); 
+    onLimitChange(limit);
   };
-
   useEffect(() => {
     const fetchStores = async () => {
       try {
-        const response = await fetch(
-          "http://localhost:5175/api/v1/stores/published"
-        );
+        const token = localStorage.getItem("authToken");
+        const response = await fetch("http://localhost:5175/api/v1/stores/me", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`, // Pass token in headers
+            "Content-Type": "application/json",
+          },
+        });
+
         if (!response.ok) {
           throw new Error("Failed to fetch stores");
         }
+
         const data = await response.json();
         setStores(data);
         setLoading(false);
@@ -361,10 +367,13 @@ const SettingsDrawer = ({ isOpen, toggleDrawer }) => {
                   "Limit 20 Stores",
                   "Limit 25 Stores",
                 ].map((style) => (
-                  <button key={style}
-                  onClick={() => handleLimitClick(parseInt(style.split(" ")[1]))}
-
-                  className="drawer-option-button">
+                  <button
+                    key={style}
+                    onClick={() =>
+                      handleLimitClick(parseInt(style.split(" ")[1]))
+                    }
+                    className="drawer-option-button"
+                  >
                     {style}
                   </button>
                 ))}
